@@ -3,6 +3,10 @@
  * @author Talita
  * @brief functions to gather location and distance information from GPS sensors
  * @date 2025-09-21
+ *
+ * TinyGPSPlus expects messages in NMEA format
+ *      http://lefebure.com/articles/nmea/ explaining the message protocol
+ *      https://nmeagen.org/ generating sample NMEA messages
  */
 
 #ifndef LOCATION_H
