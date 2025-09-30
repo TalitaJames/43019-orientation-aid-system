@@ -33,6 +33,7 @@ int directionToDevice(int);
 bool checkBoatProximity();
 
 void updateDevices();
+void displayGPSInfo(TinyGPSPlus);
 
 
 #endif //LOCATION_H
