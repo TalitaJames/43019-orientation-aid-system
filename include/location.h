@@ -18,7 +18,9 @@
 enum Type {BOAT, BUOY};
 struct Device{
     Type type;
-    TinyGPSPlus gps;
+    TinyGPSPlus gps = TinyGPSPlus();
+
+    Device(Type t) : type(t), gps(TinyGPSPlus()) {}
 };
 
 // array of each boat/buoy (0 is always this device)
@@ -32,7 +34,9 @@ int directionToDevice(int);
 
 bool checkBoatProximity();
 
+void setupDevices();
 void updateDevices();
+void updateDeviceFromStream();
 void displayGPSInfo(TinyGPSPlus);
 
 

@@ -87,6 +87,36 @@ bool checkBoatProximity(){
 }
 
 /**
+ * @brief initialises the GPS devices
+ */
+void setupDevices(){
+    devices[0] = Device(Type::BOAT);
+    devices[1] = Device(Type::BOAT);
+    devices[2] = Device(Type::BUOY);
+    devices[3] = Device(Type::BUOY);
+}
+
+/**
+ * @brief Get new GPS information
+ */
+void updateDevices(){
+  //TODO this needs to be fixed later to getting data from the ESP and not hardcoded
+}
+
+/**
+ * @brief Takes a char stream and sends it to that GPS
+ *
+ * @param deviceIndex specific device
+ * @param stream the stream
+ */
+void updateDevicesFromStream(int deviceIndex, const char *stream) {
+    for (const char* p = stream; *p; p++) {
+        devices[deviceIndex].gps.encode(*p);
+    }
+}
+
+
+/**
  * @brief prints a summary of GPS information
  * @cite [TinyGPS code example](https://github.com/mikalhart/TinyGPSPlus/blob/master/examples/BasicExample/BasicExample.ino)
  * @param gps object to get data from
