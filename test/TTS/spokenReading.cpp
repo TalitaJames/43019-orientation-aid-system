@@ -8,7 +8,7 @@ Talkie voice;
 const int buttonPin = 12;
 bool lastButton = HIGH;
 
-// --- helpers ---
+
 void sayPause() { voice.say(spPAUSE1); }
 
 void sayDigit(int d) {
