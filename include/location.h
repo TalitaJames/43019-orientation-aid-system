@@ -30,13 +30,13 @@ int nearestBuoy();
 int nearestBoat();
 
 int distanceToDevice(int);
-int directionToDevice(int);
+int directionToDevice(int); //https://registry.platformio.org/libraries/joeljojop/SimpleIMU/examples/basic_reading/basic_reading.ino
 
 bool checkBoatProximity();
 
 void setupDevices();
 void updateDevices();
-void updateDeviceFromStream();
+void updateDeviceFromStream(int, const char *);
 void displayGPSInfo(TinyGPSPlus);
 
 

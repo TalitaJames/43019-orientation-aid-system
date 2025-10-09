@@ -1,7 +1,13 @@
 #include "location.h"
+// #include "falseData.h"
 
 // array of each boat/buoy (0 is always this device)
-extern Device devices[];
+devices[DEVICE_COUNT] = {
+    Device(BOAT),  // device 0 - self
+    Device(BOAT),
+    Device(BUOY),
+    Device(BUOY)
+};
 
 /**
  * @brief finds the nearest buoy and returns its address
@@ -96,11 +102,18 @@ void setupDevices(){
     devices[3] = Device(Type::BUOY);
 }
 
+int progress = 0; // track through the fake data
 /**
  * @brief Get new GPS information
  */
 void updateDevices(){
+  // updateDeviceFromStream(0, *deviceZer[progress]);
+  // updateDeviceFromStream(1, *deviceOne[progress]);
+  // updateDeviceFromStream(2, *deviceTwo[progress]);
+  // updateDeviceFromStream(3, *deviceTre[progress]);
   //TODO this needs to be fixed later to getting data from the ESP and not hardcoded
+
+  progress++;
 }
 
 /**
@@ -109,7 +122,7 @@ void updateDevices(){
  * @param deviceIndex specific device
  * @param stream the stream
  */
-void updateDevicesFromStream(int deviceIndex, const char *stream) {
+void updateDeviceFromStream(int deviceIndex, const char *stream) {
     for (const char* p = stream; *p; p++) {
         devices[deviceIndex].gps.encode(*p);
     }
