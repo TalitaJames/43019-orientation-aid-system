@@ -11,7 +11,7 @@
 // round number to an int
 #define ROUND_2_INT(f) ((int)((f - ((int)f)) >= 0.5 ? (f + 0.5) : (f - 0.5)))
 
-const int DEVICE_COUNT = 4; // number of total devices (boats, buoy)
+const int DEVICE_COUNT = 10; // number of total devices (boats, buoy)
 const int ALARM_PROXIMITY = 100; // distance away a boat must be before alarm trigers [m]
 
 
