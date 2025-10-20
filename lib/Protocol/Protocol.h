@@ -7,9 +7,7 @@
  * Defines the packet structure 
  * calculates checksums
  * validates received packets
- *
  */
-
 
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
