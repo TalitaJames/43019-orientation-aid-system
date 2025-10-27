@@ -4,6 +4,44 @@
 
 DeviceConfig config;
 
+void configureBoat() {
+  Serial.println("\n--- BOAT CONFIGURATION ---");
+  Serial.println("Enter boat number (1-20):");
+  
+  while (!Serial.available()) { delay(10); }
+  int id = Serial.parseInt();
+  
+  if (id < 1 || id > 20) {
+    Serial.println("Invalid ID! Must be 1-20");
+    return;
+  }
+  
+  if (config.setConfig(DEVICE_TYPE_BOAT, id)) {
+    Serial.println("\nSuccess! Device configured as: " + config.getDeviceName());
+    Serial.println("Please restart and upload BoatDevice.ino");
+  }
+}
+
+void configureBuoy() {
+  Serial.println("\n--- BUOY CONFIGURATION ---");
+  Serial.println("Enter buoy number:");
+  Serial.println("  21 = Windward Mark");
+  Serial.println("  22 = Finish Buoy");
+  
+  while (!Serial.available()) { delay(10); }
+  int id = Serial.parseInt();
+  
+  if (id < 21 || id > 22) {
+    Serial.println("Invalid ID! Must be 21 or 22");
+    return;
+  }
+  
+  if (config.setConfig(DEVICE_TYPE_BUOY, id)) {
+    Serial.println("\nSuccess! Device configured as: " + config.getDeviceName());
+    Serial.println("Please restart and upload BuoyDevice.ino");
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   delay(2000);
@@ -43,44 +81,8 @@ void loop() {
       config.clearConfig();
       Serial.println("\nConfiguration cleared!");
       Serial.println("Please restart to reconfigure.");
+    } else {
+      Serial.println("\nInvalid input, try again");
     }
-  }
-}
-
-void configureBoat() {
-  Serial.println("\n--- BOAT CONFIGURATION ---");
-  Serial.println("Enter boat number (1-20):");
-  
-  while (!Serial.available()) { delay(10); }
-  int id = Serial.parseInt();
-  
-  if (id < 1 || id > 20) {
-    Serial.println("Invalid ID! Must be 1-20");
-    return;
-  }
-  
-  if (config.setConfig(DEVICE_TYPE_BOAT, id)) {
-    Serial.println("\nSuccess! Device configured as: " + config.getDeviceName());
-    Serial.println("Please restart and upload BoatDevice.ino");
-  }
-}
-
-void configureBuoy() {
-  Serial.println("\n--- BUOY CONFIGURATION ---");
-  Serial.println("Enter buoy number:");
-  Serial.println("  21 = Windward Mark");
-  Serial.println("  22 = Finish Buoy");
-  
-  while (!Serial.available()) { delay(10); }
-  int id = Serial.parseInt();
-  
-  if (id < 21 || id > 22) {
-    Serial.println("Invalid ID! Must be 21 or 22");
-    return;
-  }
-  
-  if (config.setConfig(DEVICE_TYPE_BUOY, id)) {
-    Serial.println("\nSuccess! Device configured as: " + config.getDeviceName());
-    Serial.println("Please restart and upload BuoyDevice.ino");
   }
 }
