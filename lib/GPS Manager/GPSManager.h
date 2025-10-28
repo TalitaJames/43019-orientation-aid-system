@@ -16,11 +16,21 @@
 #define GPS_RX_PIN  32
 #define GPS_TX_PIN  33
 #define GPS_BAUD    9600
+#define GPS_HISTORY_SIZE 10
+
+struct GPSDataPoint {
+  float lat;
+  float lon;
+};
 
 class GPSManager {
 private:
   TinyGPSPlus gps;
   HardwareSerial* gpsSerial;
+
+  GPSDataPoint history[GPS_HISTORY_SIZE];
+  uint8_t historyIndex = 0;
+  bool hasData = false;
   
   // Cache last valid position
   float lastLat;
@@ -71,6 +81,10 @@ public:
   
   // Get raw TinyGPS object for advanced use
   TinyGPSPlus& getRawGPS() { return gps; }
+
+  void recordPosition(float lat, float lon);
+  const GPSDataPoint* getHistory() const;  // give Navigation read-only access
+  uint8_t getHistoryCount() const;
 };
 
 #endif

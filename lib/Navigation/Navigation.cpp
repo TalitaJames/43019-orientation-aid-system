@@ -80,4 +80,24 @@ float Navigation::angleDifference(float angle1, float angle2) {
 }
 
 
+float* Navigation::computeHeadingTrend(const GPSDataPoint* points, uint8_t count) {
+  if (count < 2) return nullptr;
+
+  uint8_t validPairs = 0;
+
+  for (uint8_t i = 0; i < count - 1; i++) {
+    float lat1 = points[i].lat;
+    float lon1 = points[i].lon;
+    float lat2 = points[i + 1].lat;
+    float lon2 = points[i + 1].lon;
+
+    BearingData[idx] = bearingTo(lat1, lon1, lat2, lon2);
+    idx = (idx + 1) % sizeof(BearingData);
+    validPairs++;
+  }
+
+  if (validPairs == 0) return nullptr;
+
+  return BearingData;
+}
 

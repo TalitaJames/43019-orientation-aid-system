@@ -80,3 +80,17 @@ uint8_t GPSManager::getSatellites() {
   }
   return 0;
 }
+
+void GPSManager::recordPosition(float lat, float lon) {
+  history[historyIndex] = { lat, lon };
+  historyIndex = (historyIndex + 1) % GPS_HISTORY_SIZE;
+  hasData = true;
+}
+
+const GPSDataPoint* GPSManager::getHistory() const {
+  return history;
+}
+
+uint8_t GPSManager::getHistoryCount() const {
+  return hasData ? GPS_HISTORY_SIZE : historyIndex;
+}

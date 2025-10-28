@@ -10,6 +10,7 @@
 
 #include <Arduino.h>
 #include <math.h>
+#include <GPSManager.h>
 
 /**
  * @brief Class to define the navigation utility functions necessary for interpreting GPS coordinates. 
@@ -29,7 +30,9 @@ class Navigation {
 private:
     float metersPerDegreeLat;   // ~111,319.444 meters
     float metersPerDegreeLon;   // ~92,417.805 meters (at 33°S)
-  
+    float BearingData[10];
+    int idx = 0;
+
 public:
 
     /**
@@ -64,7 +67,7 @@ public:
      */
     float angleDifference(float angle1, float angle2);
 
-
+    float* computeHeadingTrend(const GPSDataPoint* points, uint8_t count);
 
 };
 
