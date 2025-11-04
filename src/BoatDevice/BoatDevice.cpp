@@ -72,7 +72,11 @@ void loop () {
                 Serial.print(" packet sent!");
             }
         }
-    } else if (lora.available()) {
+    } 
+    else {
+      PositionPacket packet;
+      if (lora.receive(packet)) {
+      lora.startReceive();
     }
 
     
@@ -131,7 +135,7 @@ void loop () {
     //if boat leaves target buoy range and passes global minima, switch to next target buoy. 
 
     //shutdown procedure
-    
+  }
 }
 ///////////////////////////////////////////////////////////////////
 /*
@@ -212,52 +216,6 @@ void loop() {
 }
 
 ////////////////////////////////////////////////////////////////////////
-
-#include <Arduino.h>
-#include <RadioLib.h>
- 
-// Pin definitions - adjust these to match your hardware
-#define LORA_CS    13
-#define LORA_DIO0  26
-#define LORA_RST   14
-#define LORA_DIO1  3
- 
-SX1276 radio = new Module(LORA_CS, LORA_DIO0, LORA_RST, LORA_DIO1);
- 
-void setup() {
-  Serial.begin(115200);
-  delay(2000);
-  
-  Serial.println("=== LoRa Test - Device 1 (Transmitter) ===");
-  Serial.print("Initializing LoRa... ");
-  
-  // Initialize with corrected parameters
-  int state = radio.begin(
-    915.0,   // Frequency (MHz)
-    125.0,   // Bandwidth (kHz)
-    7,       // Spreading factor
-    7,       // Coding rate (4/7)
-    0x12,    // Sync word
-    10,      // Output power (dBm) - CHANGED FROM 20 to 10
-    8,       // Preamble length
-    0        // Gain (0 = auto)
-  );
-  
-  if (state != RADIOLIB_ERR_NONE) {
-    Serial.print("FAILED! Error code: ");
-    Serial.println(state);
-    Serial.println("\nError codes:");
-    Serial.println("-2 = Invalid frequency");
-    Serial.println("-3 = Invalid bandwidth");
-    Serial.println("-4 = Invalid spreading factor");
-    Serial.println("-5 = Invalid coding rate");
-    Serial.println("-6 = Invalid output power");
-    while (true);
-  }
-  
-  Serial.println("SUCCESS!");
-  Serial.println("Starting transmission loop...\n");
-}
  
 void loop() {
   String message = "Hello World 1";
@@ -277,4 +235,4 @@ void loop() {
   Serial.println("---");
   delay(2000);  // Send every 2 seconds
 }
-  */
+*/
