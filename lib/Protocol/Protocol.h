@@ -35,7 +35,6 @@ struct PositionPacket {
   float latitude;        // 4 bytes
   float longitude;       // 4 bytes
   uint16_t heading;      // 0-359 degrees (from IMU/GPS)
-  uint16_t speed;        // Speed in cm/s (0-65535) can GPS give speed? is this relevant?
   uint32_t timestamp;    // GPS time in milliseconds since midnight
   uint8_t checksum;      // CRC8 checksum
 } __attribute__((packed)); //dont add invisible bytes 
@@ -55,7 +54,6 @@ public:
     float lat,
     float lon,
     uint16_t heading,
-    uint16_t speed,
     uint32_t timestamp
   );
   

@@ -13,18 +13,20 @@ LoRaManager::~LoRaManager() {
   }
 }
 
-bool LoRaManager::begin(float freq, float bw, uint8_t sf) {
+bool LoRaManager::begin() {
   radio = new SX1276(new Module(LORA_CS, LORA_DIO0, LORA_RST, LORA_DIO1));
   
   Serial.print("Initializing LoRa radio... ");
   
   int state = radio->begin(
-    freq,    // Frequency
-    bw,      // Bandwidth
-    sf,      // Spreading factor
-    5,       // Coding rate (4/5)
-    0x12,    // Sync word (must match all devices)
-    20       // Output power (dBm)
+    915.0,   // Frequency (MHz)
+    125.0,   // Bandwidth (kHz)
+    7,       // Spreading factor
+    7,       // Coding rate (4/7)
+    0x12,    // Sync word
+    10,      // Output power (dBm) - CHANGED FROM 20 to 10
+    8,       // Preamble length
+    0        // Gain (0 = auto)
   );
   
   if (state != RADIOLIB_ERR_NONE) {

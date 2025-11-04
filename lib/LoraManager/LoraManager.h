@@ -14,10 +14,10 @@
 #include "Protocol.h"
 
 // LoRa pin definitions (adjust for your board)
-#define LORA_CS    5
-#define LORA_DIO0  17
-#define LORA_RST   16
-#define LORA_DIO1  14
+#define LORA_CS    13
+#define LORA_DIO0  26
+#define LORA_RST   14
+#define LORA_DIO1  3
 
 class LoRaManager {
 private:
@@ -43,12 +43,9 @@ public:
   ~LoRaManager();
   
   /**
-   * @brief Creates the radio object, a reference to the Lora Module. 
-   * @param freq = Frequency (915MHz) for australia. 
-   * @param bw = Bandwidth (KHz)
-   * @param sf = 7 Spreading factor (fastest in our case) 
+   * @brief Creates the radio object, a reference to the Lora Module.
    */
-  bool begin(float freq = 915.0, float bw = 125.0, uint8_t sf = 7);
+  bool begin();
   
   /**
    * @brief Transmits package using packet structure. 

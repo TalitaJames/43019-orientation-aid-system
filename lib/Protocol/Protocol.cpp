@@ -43,7 +43,6 @@ PositionPacket Protocol::createPositionPacket(
   float lat,
   float lon,
   uint16_t heading,
-  uint16_t speed,
   uint32_t timestamp
 ) {
   PositionPacket packet;
@@ -54,7 +53,6 @@ PositionPacket Protocol::createPositionPacket(
   packet.latitude = lat;
   packet.longitude = lon;
   packet.heading = heading;
-  packet.speed = speed;
   packet.timestamp = timestamp;
   
   // Calculate and set checksum
