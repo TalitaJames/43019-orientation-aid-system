@@ -11,6 +11,7 @@
 #define TDMA_SCHEDULER_H
 
 #include <Arduino.h>
+#include <DeviceConfig.h>
 
 /**
  * @brief Class that defines the timing schedule for the device communication.
@@ -23,7 +24,7 @@ class TDMAScheduler {
 private:
   uint8_t myDeviceID;
   uint16_t slotDuration;        // 60ms
-  uint8_t totalSlots;           // 22
+  uint8_t totalSlots;           // Max number defined in DeviceConfig.h
   uint16_t cycleDuration;       // 1320ms
   uint16_t transmitWindow;      // 50ms
   
@@ -40,7 +41,7 @@ private:
   uint32_t getMySlotStartTime() const;
   
 public:
-  TDMAScheduler(uint8_t deviceID, uint8_t numDevices = 22, uint16_t slotMs = 60);
+  TDMAScheduler(uint8_t deviceID, uint8_t numDevices = DeviceConfig::MaxDeviceNumber, uint16_t slotMs = 60);
   
   // Update with PPS pulse and GPS second
   void updateWithPPS(uint32_t ppsMicros, uint32_t gpsSecond);

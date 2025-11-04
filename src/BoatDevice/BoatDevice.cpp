@@ -51,7 +51,7 @@ void setup() {
     Serial.println(name);
     Serial.println(" Setup complete!");
 }
-
+/*
 void loop () {
     //receive GPS data, send when its their turn
     gps.update();
@@ -137,6 +137,52 @@ void loop () {
     //shutdown procedure
   }
 }
+*/
+void loop(){
+  /*
+  if (tdma && tdma->canTransmit()) {
+    float lat, lon;
+    lat = 1;
+    lon = 2;
+    uint16_t heading = 100;
+    uint32_t ts = 1000;
+
+    // Create packet and send
+    PositionPacket packet = Protocol::createPositionPacket(
+        DEVICE_TYPE_BUOY, ID, lat, lon, heading, ts
+    );
+
+    if (lora.transmit(packet)) {
+        Serial.println(name);
+        Serial.print(" packet sent!");
+    }
+  } 
+  else {
+    PositionPacket packet;
+    if (lora.receive(packet)) {
+    lora.startReceive();
+    }
+  }
+  */
+  PositionPacket packet;
+  lora.startReceive();
+  Serial.println("Listening...");
+  if (lora.receive(packet)) {
+    Serial.println("Found packet!");
+    Serial.println("---- Position Packet ----");
+    Serial.print("Device Type: "); Serial.println(packet.deviceType);
+    Serial.print("Device ID: "); Serial.println(packet.deviceID);
+    Serial.print("Latitude: "); Serial.println(packet.latitude, 6);
+    Serial.print("Longitude: "); Serial.println(packet.longitude, 6);
+    Serial.print("Heading: "); Serial.println(packet.heading);
+    Serial.print("Timestamp: "); Serial.println(packet.timestamp);
+    Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
+    Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
+    Serial.println("--------------------------");
+  }
+  delay(200);
+}
+
 ///////////////////////////////////////////////////////////////////
 /*
 #include <Arduino.h>
@@ -164,7 +210,7 @@ void setup() {
     7,       // Spreading factor
     7,       // Coding rate (4/7)
     0x12,    // Sync word
-    10,      // Output power (dBm) - CHANGED FROM 20 to 10
+    10,      // Output power (dBm)
     8,       // Preamble length
     0        // Gain (0 = auto)
   );
