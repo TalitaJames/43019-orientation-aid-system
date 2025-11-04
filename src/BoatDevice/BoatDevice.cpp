@@ -51,7 +51,7 @@ void setup() {
     Serial.println(name);
     Serial.println(" Setup complete!");
 }
-/*
+
 void loop () {
     //receive GPS data, send when its their turn
     gps.update();
@@ -75,8 +75,21 @@ void loop () {
     } 
     else {
       PositionPacket packet;
-      if (lora.receive(packet)) {
       lora.startReceive();
+      Serial.println("Listening...");
+      if (lora.receive(packet)) {
+        Serial.println("Found packet!");
+        Serial.println("---- Position Packet ----");
+        Serial.print("Device Type: "); Serial.println(packet.deviceType);
+        Serial.print("Device ID: "); Serial.println(packet.deviceID);
+        Serial.print("Latitude: "); Serial.println(packet.latitude, 6);
+        Serial.print("Longitude: "); Serial.println(packet.longitude, 6);
+        Serial.print("Heading: "); Serial.println(packet.heading);
+        Serial.print("Timestamp: "); Serial.println(packet.timestamp);
+        Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
+        Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
+        Serial.println("--------------------------");
+      }
     }
 
     
@@ -135,11 +148,11 @@ void loop () {
     //if boat leaves target buoy range and passes global minima, switch to next target buoy. 
 
     //shutdown procedure
-  }
 }
-*/
+
+/* 
+//Test loop for send and receive LORA without gps
 void loop(){
-  /*
   if (tdma && tdma->canTransmit()) {
     float lat, lon;
     lat = 1;
@@ -159,30 +172,25 @@ void loop(){
   } 
   else {
     PositionPacket packet;
-    if (lora.receive(packet)) {
     lora.startReceive();
+    Serial.println("Listening...");
+    if (lora.receive(packet)) {
+      Serial.println("Found packet!");
+      Serial.println("---- Position Packet ----");
+      Serial.print("Device Type: "); Serial.println(packet.deviceType);
+      Serial.print("Device ID: "); Serial.println(packet.deviceID);
+      Serial.print("Latitude: "); Serial.println(packet.latitude, 6);
+      Serial.print("Longitude: "); Serial.println(packet.longitude, 6);
+      Serial.print("Heading: "); Serial.println(packet.heading);
+      Serial.print("Timestamp: "); Serial.println(packet.timestamp);
+      Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
+      Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
+      Serial.println("--------------------------");
     }
-  }
-  */
-  PositionPacket packet;
-  lora.startReceive();
-  Serial.println("Listening...");
-  if (lora.receive(packet)) {
-    Serial.println("Found packet!");
-    Serial.println("---- Position Packet ----");
-    Serial.print("Device Type: "); Serial.println(packet.deviceType);
-    Serial.print("Device ID: "); Serial.println(packet.deviceID);
-    Serial.print("Latitude: "); Serial.println(packet.latitude, 6);
-    Serial.print("Longitude: "); Serial.println(packet.longitude, 6);
-    Serial.print("Heading: "); Serial.println(packet.heading);
-    Serial.print("Timestamp: "); Serial.println(packet.timestamp);
-    Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
-    Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
-    Serial.println("--------------------------");
   }
   delay(200);
 }
-
+*/
 ///////////////////////////////////////////////////////////////////
 /*
 #include <Arduino.h>
