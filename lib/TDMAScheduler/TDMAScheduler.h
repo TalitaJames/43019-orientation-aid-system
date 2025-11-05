@@ -6,9 +6,11 @@
  * 
  */
 
-
 #ifndef TDMA_SCHEDULER_H
 #define TDMA_SCHEDULER_H
+
+#define PPS_PIN 4
+
 
 #include <Arduino.h>
 
@@ -22,17 +24,19 @@
 class TDMAScheduler {
 private:
   uint8_t myDeviceID;
-  uint16_t slotDuration;        // 60ms
-  uint8_t totalSlots;           // 22
-  uint16_t cycleDuration;       // 1320ms
-  uint16_t transmitWindow;      // 50ms
+  uint16_t slotDuration;        // 100ms
+  uint8_t totalSlots;           // 10
+  uint16_t cycleDuration;       // 1000ms
+  uint16_t transmitWindow;      // 80ms
   
   // GPS time tracking
   uint32_t lastGPSSecond;       // GPS time in whole seconds
-  uint32_t lastPPSMicros;       // micros() when PPS pulse arrived
-  bool synchronized;
+  volatile uint32_t lastPPSMicros;       // micros() when PPS pulse arrived
+  volatile bool synchronized;
+  volatile bool newPPS;
   
   // Calculate current time with microsecond precision
+  
   uint32_t getCurrentTimeMillis() const;
   uint32_t getCurrentTimeMicros() const;
   
@@ -40,7 +44,18 @@ private:
   uint32_t getMySlotStartTime() const;
   
 public:
-  TDMAScheduler(uint8_t deviceID, uint8_t numDevices = 22, uint16_t slotMs = 60);
+
+  /**
+   * @brief Constructor 
+   */
+  TDMAScheduler(uint8_t deviceID, uint8_t numDevices = 22 , uint16_t slotMs = 60);
+
+
+  /**
+   * @brief Records time instantaneously as the rising edge is detected from the PPS
+   *  IRAM_ATTR stores ISR in fast memory, so it executes immediately 
+   */
+  void IRAM_ATTR onPPS();
   
   // Update with PPS pulse and GPS second
   void updateWithPPS(uint32_t ppsMicros, uint32_t gpsSecond);
@@ -59,3 +74,18 @@ public:
 };
 
 #endif
+
+
+/**
+ * system workflow:
+ * 1. Rising pin from PPS on the start of each second. 
+ * 2. Micros() is called immmediately to save a reference time for when the PPS rising edge was.
+ * 3. Based on device ID, each device knows when to read, and then when to 
+ * 
+ */
+
+
+//  void setup() {
+//   pinMode(PPS_PIN, INPUT);
+//   attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPPS, RISING);
+// }
