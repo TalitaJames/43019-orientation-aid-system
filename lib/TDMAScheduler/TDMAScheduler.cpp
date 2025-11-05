@@ -1,10 +1,10 @@
 #include "TDMAScheduler.h"
 
 TDMAScheduler::TDMAScheduler(uint8_t deviceID, uint8_t numDevices, uint16_t slotMs)
-  : myDeviceID(deviceID), 
-    slotDuration(slotMs),
+  : myDeviceID(deviceID),
     totalSlots(numDevices),
-    transmitWindow(50),
+    slotDuration(slotMs * 1000UL),
+    transmitWindow(slotMs * 800UL/1000UL), //80% of transmit slot
     lastGPSSecond(0),
     lastPPSMicros(0),
     synchronized(false) {
@@ -56,16 +56,32 @@ uint32_t TDMAScheduler::getMySlotStartTime() const {
   return cycleStart + slotOffset;
 }
 
+uint32_t TDMAScheduler::microsSincePPS() const {
+  if (!synchronized) return 0;
+  uint32_t now = micros();
+  if (now >= lastPPSMicros)
+    return now - lastPPSMicros;
+  else
+    return (0xFFFFFFFF - lastPPSMicros) + now + 1; // handle rollover
+}
+
 bool TDMAScheduler::canTransmit() const {
   if (!synchronized) {
     return false;
   }
   
-  uint32_t currentTimeMicros = getCurrentTimeMicros();
-  uint32_t slotStartMicros = getMySlotStartTime() * 1000UL;  // Convert to microseconds
-  uint32_t slotEndMicros = slotStartMicros + (transmitWindow * 1000UL);
+  uint32_t delta = microsSincePPS();
+  // guard: outside of current 1-second PPS frame
+  if (delta >= 1000000UL) return false;
+  uint32_t mySlotStart = (myDeviceID - 1) * slotDuration;
+  uint32_t mySlotEnd = mySlotStart + transmitWindow;
+
+  return (delta >= mySlotStart && delta < mySlotEnd);
+  //uint32_t currentTimeMicros = getCurrentTimeMicros();
+  //uint32_t slotStartMicros = getMySlotStartTime() * 1000UL;  // Convert to microseconds
+  //uint32_t slotEndMicros = slotStartMicros + (transmitWindow * 1000UL);
   
-  return (currentTimeMicros >= slotStartMicros && currentTimeMicros < slotEndMicros);
+  //return (currentTimeMicros >= slotStartMicros && currentTimeMicros < slotEndMicros);
 }
 
 int32_t TDMAScheduler::getTimeUntilMySlot() const {

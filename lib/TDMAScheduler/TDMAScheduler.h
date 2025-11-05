@@ -23,10 +23,10 @@
 class TDMAScheduler {
 private:
   uint8_t myDeviceID;
-  uint16_t slotDuration;        // 60ms
+  uint16_t slotDuration;        // In microseconds (so 100000 for 100ms)
   uint8_t totalSlots;           // Max number defined in DeviceConfig.h
+  uint16_t transmitWindow;      // shorter than slot, e.g. 80ms
   uint16_t cycleDuration;       // 1320ms
-  uint16_t transmitWindow;      // 50ms
   
   // GPS time tracking
   uint32_t lastGPSSecond;       // GPS time in whole seconds
@@ -41,11 +41,14 @@ private:
   uint32_t getMySlotStartTime() const;
   
 public:
-  TDMAScheduler(uint8_t deviceID, uint8_t numDevices = DeviceConfig::MaxDeviceNumber, uint16_t slotMs = 60);
+  TDMAScheduler(uint8_t deviceID, uint8_t numDevices = DeviceConfig::MaxDeviceNumber, uint16_t slotMs = 100);
   
   // Update with PPS pulse and GPS second
   void updateWithPPS(uint32_t ppsMicros, uint32_t gpsSecond);
   
+  // Time elapsed since last PPS (in microseconds)
+  uint32_t microsSincePPS() const; //this could replace the other get time functions
+
   // Check if we should transmit now
   bool canTransmit() const;
   
