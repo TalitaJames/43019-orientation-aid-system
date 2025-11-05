@@ -30,6 +30,10 @@ private:
   uint8_t deviceID; //cached in RAM for fast access
   bool configured; //checks if device is configured
   Preferences prefs; //flash storage interface
+public:
+  static constexpr int MaxBoatNumber = 8;
+  static constexpr int MaxBuoyNumber = 2;
+  static constexpr int MaxDeviceNumber = MaxBoatNumber + MaxBuoyNumber;
   
 public:
   DeviceConfig();

@@ -77,9 +77,9 @@ String DeviceConfig::getDeviceName() const {
 
 bool DeviceConfig::isValidID(DeviceType type, uint8_t id) {
   if (type == DEVICE_TYPE_BOAT) {
-    return (id >= 1 && id <= 20);
+    return (id >= 1 && id <= MaxBoatNumber);
   } else if (type == DEVICE_TYPE_BUOY) {
-    return (id >= 21 && id <= 22);
+    return (id > MaxBoatNumber && id <= MaxDeviceNumber);
   }
   return false;
 }

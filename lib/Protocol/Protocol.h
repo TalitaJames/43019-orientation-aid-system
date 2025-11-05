@@ -31,7 +31,7 @@ struct PositionPacket {
   uint8_t header;        // 0xAA - packet start marker
   uint8_t packetType;    // PACKET_TYPE_POSITION
   uint8_t deviceType;    // DEVICE_TYPE_BOAT or DEVICE_TYPE_BUOY
-  uint8_t deviceID;      // 1-20 for boats, 21-22 for buoys
+  uint8_t deviceID;      // Max number defined in DeviceConfig.h
   float latitude;        // 4 bytes
   float longitude;       // 4 bytes
   uint16_t heading;      // 0-359 degrees (from IMU/GPS)

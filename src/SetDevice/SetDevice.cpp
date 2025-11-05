@@ -3,16 +3,22 @@
 #include <Arduino.h>
 
 DeviceConfig config;
+const int MaxBoat = config.MaxBoatNumber;
+const int MaxBuoy = config.MaxBuoyNumber;
+const int MaxDevice = MaxBoat+MaxBuoy;
 
 void configureBoat() {
   Serial.println("\n--- BOAT CONFIGURATION ---");
-  Serial.println("Enter boat number (1-20):");
+  Serial.println("Enter boat number (1-");
+  Serial.print(MaxBoat);
+  Serial.print("):");
   
   while (!Serial.available()) { delay(10); }
   int id = Serial.parseInt();
   
-  if (id < 1 || id > 20) {
-    Serial.println("Invalid ID! Must be 1-20");
+  if (id < 1 || id > MaxBoat) {
+    Serial.println("Invalid ID! Must be 1-");
+    Serial.print(MaxBoat);
     return;
   }
   
@@ -25,14 +31,18 @@ void configureBoat() {
 void configureBuoy() {
   Serial.println("\n--- BUOY CONFIGURATION ---");
   Serial.println("Enter buoy number:");
-  Serial.println("  21 = Windward Mark");
-  Serial.println("  22 = Finish Buoy");
+  Serial.print(MaxBoat+1);
+  Serial.print("-");
+  Serial.print(MaxDevice);
   
   while (!Serial.available()) { delay(10); }
   int id = Serial.parseInt();
   
-  if (id < 21 || id > 22) {
-    Serial.println("Invalid ID! Must be 21 or 22");
+  if (id <= MaxBoat || id > MaxDevice) {
+    Serial.println("Invalid ID! Must be ");
+    Serial.print(MaxBoat+1);
+    Serial.print("-");
+    Serial.print(MaxDevice);
     return;
   }
   
@@ -63,8 +73,8 @@ void setup() {
   
   Serial.println("\n=================================");
   Serial.println("Choose an option:");
-  Serial.println("  1. Configure as BOAT (ID 1-20)");
-  Serial.println("  2. Configure as BUOY (ID 21-22)");
+  Serial.println("  1. Configure as BOAT");
+  Serial.println("  2. Configure as BUOY");
   Serial.println("  3. Clear configuration");
   Serial.println("=================================\n");
 }
