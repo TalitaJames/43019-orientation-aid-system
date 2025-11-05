@@ -36,7 +36,6 @@ private:
   float lastLat;
   float lastLon;
   uint16_t lastHeading;
-  uint16_t lastSpeed;  // cm/s
   uint32_t lastGPSTime;
   bool hasValidFix;
   
@@ -65,9 +64,6 @@ public:
   
   // Get current heading (0-359)
   uint16_t getHeading();
-  
-  // Get current speed (cm/s)
-  uint16_t getSpeed();
   
   // Get GPS time in milliseconds since midnight UTC
   uint32_t getGPSTimeMillis();

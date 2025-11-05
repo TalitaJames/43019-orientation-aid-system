@@ -3,7 +3,7 @@
 
 GPSManager::GPSManager() 
   : gpsSerial(nullptr), lastLat(0), lastLon(0), 
-    lastHeading(0), lastSpeed(0), lastGPSTime(0), hasValidFix(false) {
+    lastHeading(0), lastGPSTime(0), hasValidFix(false) {
 }
 
 GPSManager::~GPSManager() {
@@ -38,12 +38,6 @@ void GPSManager::update() {
     lastHeading = (uint16_t)gps.course.deg();
   }
   
-  //cache speed
-  if (gps.speed.isValid() && gps.speed.isUpdated()) {
-    // Convert knots to cm/s (1 knot = 51.4444 cm/s)
-    lastSpeed = (uint16_t)(gps.speed.knots() * 51.4444);
-  }
-  
   //cache time 
   if (gps.time.isValid() && gps.time.isUpdated()) {
     lastGPSTime = (gps.time.hour() * 3600000UL) +
@@ -64,10 +58,6 @@ bool GPSManager::getPosition(float& lat, float& lon) {
 
 uint16_t GPSManager::getHeading() {
   return lastHeading;
-}
-
-uint16_t GPSManager::getSpeed() {
-  return lastSpeed;
 }
 
 uint32_t GPSManager::getGPSTimeMillis() {
