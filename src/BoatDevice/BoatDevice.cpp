@@ -7,6 +7,7 @@
 #include <Navigation.h>
 #include <Protocol.h>
 #include <TDMAScheduler.h>
+#include <Button.h>
 
 #define MaxDevice (DeviceConfig::MaxDeviceNumber)
 #define MaxBoat (DeviceConfig::MaxBoatNumber)
@@ -60,6 +61,7 @@ void setup() {
   // Initialize TDMA Scheduler (assume up to 5 boats, 1s per slot)
   tdma = new TDMAScheduler(ID, MaxDevice, 100);
 
+  buttonSetup();
   Serial.println(name);
   Serial.println(" Setup complete!");
 }

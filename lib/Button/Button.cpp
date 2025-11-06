@@ -9,16 +9,15 @@ boolean ledStatus;
 void buttonSetup(){
     pinMode(LED_PIN, OUTPUT); //debug led
     ledStatus = false;
-    digitalWrite(LED_PIN, LOW);
+    digitalWrite(LED_PIN, ledStatus);
 
     // initialize the pushbutton pin as an input:
     pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-    interrupts(); //enables use of interupts
-    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonInterrupt, RISING);
+    // interrupts(); //enables use of interupts
+    // attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonInterrupt, RISING);
 
     Serial.println("Button Setup Complete");
-
 }
 
 /**
@@ -33,16 +32,22 @@ void buttonInterrupt(){
     }
 }
 
+/**
+ * @brief Displays data about the button and status
+ *
+ */
 void debugButton(){
-    int btnStatus = digitalRead(BUTTON_PIN);
+    int btnStatus = !((boolean) digitalRead(BUTTON_PIN));
     Serial.print("btnStatus: ");
     Serial.print(btnStatus);
     Serial.print("\tledStatus: ");
-    Serial.println(ledStatus);
+    Serial.print(ledStatus);
 
-    if (!digitalRead(BUTTON_PIN)){
-        Serial.println("Button Pressed");
+    if (btnStatus){
+        Serial.print("\tButton Pressed");
         digitalWrite(LED_PIN, ledStatus);
         ledStatus != ledStatus;
     }
+
+    Serial.println();
 }
