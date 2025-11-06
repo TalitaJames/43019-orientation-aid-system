@@ -9,8 +9,6 @@
 #ifndef TDMA_SCHEDULER_H
 #define TDMA_SCHEDULER_H
 
-#define PPS_PIN 4
-
 
 #include <Arduino.h>
 #include <DeviceConfig.h>
@@ -23,62 +21,26 @@
  * https://wiki.keyestudio.com/KS0319_keyestudio_GPS_Module
  */
 class TDMAScheduler {
-private:
-  uint8_t myDeviceID;
-  uint16_t slotDuration;        // In microseconds (so 100000 for 100ms)
-  uint8_t totalSlots;           // Max number defined in DeviceConfig.h
-  uint16_t transmitWindow;      // shorter than slot, e.g. 80ms
-  uint16_t cycleDuration;       // 1320ms
-  
-  // GPS time tracking
-  uint32_t lastGPSSecond;       // GPS time in whole seconds
-  volatile uint32_t lastPPSMicros;       // micros() when PPS pulse arrived
-  volatile bool synchronized;
-  volatile bool newPPS;
-  
-  // Calculate current time with microsecond precision
-  
-  uint32_t getCurrentTimeMillis() const;
-  uint32_t getCurrentTimeMicros() const;
-  
-  uint32_t getCycleStartTime() const;
-  uint32_t getMySlotStartTime() const;
-  
 public:
-  TDMAScheduler(uint8_t deviceID, uint8_t numDevices = DeviceConfig::MaxDeviceNumber, uint16_t slotMs = 100);
-  
-  // Update with PPS pulse and GPS second
-  void updateWithPPS(uint32_t ppsMicros, uint32_t gpsSecond);
-  
-  // Time elapsed since last PPS (in microseconds)
-  uint32_t microsSincePPS() const; //this could replace the other get time functions
 
-  // Check if we should transmit now
+  TDMAScheduler(uint8_t deviceID, uint8_t totalDevices, uint16_t slotMs); //constructor 
+  void onPPSInterrupt(unsigned long ppsMicros);
+  void update();
   bool canTransmit() const;
+
+  //debugging
+  unsigned long getSlotStart() const;
+  unsigned long getSlotEnd() const;
+  unsigned long getCycleStart() const;
+
+private:
+  uint8_t _deviceID;
+  uint8_t _totalDevices;
+  unsigned long _slotDuration;
+  unsigned long _cycleStart;
+  bool _newCycle;
   
-  // Check if synchronized
-  bool isSynchronized() const { return synchronized; }
-  
-  // Get timing info
-  int32_t getTimeUntilMySlot() const;
-  uint8_t getCurrentSlot() const;
-  uint16_t getCycleDuration() const { return cycleDuration; }
-  float getUpdateRate() const { return 1000.0f / cycleDuration; }
 };
 
 #endif
 
-
-/**
- * system workflow:
- * 1. Rising pin from PPS on the start of each second. 
- * 2. Micros() is called immmediately to save a reference time for when the PPS rising edge was.
- * 3. Based on device ID, each device knows when to read, and then when to 
- * 
- */
-
-
-//  void setup() {
-//   pinMode(PPS_PIN, INPUT);
-//   attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPPS, RISING);
-// }
