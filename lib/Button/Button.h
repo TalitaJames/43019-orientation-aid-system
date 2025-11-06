@@ -11,11 +11,11 @@
 #include <Arduino.h>
 
 #define BUTTON_PIN 12
-#define LED_PIN 22
+// #define LED_PIN 22
 
 // attachInterrupt(digitalPinToInterrupt(pin), ISR, mode)
 
-void buttonInterrupt();
+void IRAM_ATTR buttonInterrupt();
 void buttonSetup();
 void debugButton();
 
