@@ -79,25 +79,38 @@ float Navigation::angleDifference(float angle1, float angle2) {
   return diff;
 }
 
+float Navigation::computeHeadingTrend(const GPSHistory* points, uint8_t count) {
+  if (count < 2) return lastHeading;  // not enough data
 
-float* Navigation::computeHeadingTrend(const GPSDataPoint* points, uint8_t count) {
-  if (count < 2) return nullptr;
-
-  uint8_t validPairs = 0;
+  float totalBearing = 0.0f;
+  uint8_t validCount = 0;
 
   for (uint8_t i = 0; i < count - 1; i++) {
-    float lat1 = points[i].lat;
-    float lon1 = points[i].lon;
-    float lat2 = points[i + 1].lat;
-    float lon2 = points[i + 1].lon;
+    float lat1 = points[i].latitude;
+    float lon1 = points[i].longitude;
+    float lat2 = points[i + 1].latitude;
+    float lon2 = points[i + 1].longitude;
 
-    BearingData[idx] = bearingTo(lat1, lon1, lat2, lon2);
-    idx = (idx + 1) % sizeof(BearingData);
-    validPairs++;
+    float dist = distanceBetween(lat1, lon1, lat2, lon2);
+
+    // Ignore small movements (e.g., GPS noise)
+    if (dist < 1.5f) continue;
+
+    float bearing = bearingTo(lat1, lon1, lat2, lon2);
+    totalBearing += bearing;
+    validCount++;
   }
 
-  if (validPairs == 0) return nullptr;
+  if (validCount == 0) {
+    // Boat stationary — keep last known heading
+    return lastHeading;
+  }
 
-  return BearingData;
+  float avgBearing = totalBearing / validCount;
+
+  // Normalize heading to 0-360
+  lastHeading = normaliseAngle(avgBearing);
+  return lastHeading;
 }
+
 

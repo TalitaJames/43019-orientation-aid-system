@@ -11,7 +11,6 @@
 #define MaxDevice (DeviceConfig::MaxDeviceNumber)
 #define MaxBoat (DeviceConfig::MaxBoatNumber)
 #define MaxBuoy (DeviceConfig::MaxBuoyNumber)
-#define PPS 27
 
 DeviceConfig config;
 DeviceRegistry registry;
@@ -28,8 +27,8 @@ uint16_t heading;
 uint32_t ts;
 float danger_dist = 20;
 uint16_t lastGPSLog = 0;
+
 void setup() {
-  pinMode(PPS, INPUT);
   //startup procedure
   Serial.begin(115200);
 
@@ -79,11 +78,7 @@ void loop () {
   }
 
   // Send when its their turn
-  //if (tdma && tdma->canTransmit()) {
-  
-  if (digitalRead(PPS) == HIGH) {
-    uint8_t delay_time = ID*100;
-    delay(delay_time);
+  if (tdma && tdma->canTransmit()) {
     Serial.println("Attempting send protocol...");
     // Create packet and send
     PositionPacket send_packet = Protocol::createPositionPacket(
