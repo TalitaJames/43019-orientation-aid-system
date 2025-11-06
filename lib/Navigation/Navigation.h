@@ -11,6 +11,7 @@
 #include <Arduino.h>
 #include <math.h>
 #include <GPSManager.h>
+#include <DeviceRegistry.h>
 
 /**
  * @brief Class to define the navigation utility functions necessary for interpreting GPS coordinates. 
@@ -32,6 +33,7 @@ private:
     float metersPerDegreeLon;   // ~92,417.805 meters (at 33°S)
     float BearingData[10];
     int idx = 0;
+    float lastHeading = 0.0f;
 
 public:
 
@@ -61,13 +63,15 @@ public:
      */
     static float normaliseAngle(float angle);
 
-
     /**
      * @brief give more reasonable answers for heading subtractions. 
      */
     float angleDifference(float angle1, float angle2);
 
-    float* computeHeadingTrend(const GPSDataPoint* points, uint8_t count);
+    /**
+     * @brief find boat heading compare to global heading through past gps data 
+     */
+    float computeHeadingTrend(const GPSHistory* points, uint8_t count);
 
 };
 
