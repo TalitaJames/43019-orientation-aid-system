@@ -71,7 +71,7 @@ public:
     /**
      * @brief find boat heading compare to global heading through past gps data 
      */
-    float* computeHeadingTrend(const GPSDataPoint* points, uint8_t count);
+    float computeHeadingTrend(const GPSHistory* points, uint8_t count);
 
 };
 

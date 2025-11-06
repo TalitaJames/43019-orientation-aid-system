@@ -113,8 +113,9 @@ uint8_t TDMAScheduler::getCurrentSlot() const {
   return timeInCycle / slotDuration;
 }
 
-
+/*
 void IRAM_ATTR TDMAScheduler::onPPS() {
   lastPPSMicros = micros();  // timestamp as close to edge as possible
   newPPS = true;
 }
+  */
