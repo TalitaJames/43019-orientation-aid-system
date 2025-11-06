@@ -6,9 +6,11 @@
  * 
  */
 
-
 #ifndef TDMA_SCHEDULER_H
 #define TDMA_SCHEDULER_H
+
+#define PPS_PIN 4
+
 
 #include <Arduino.h>
 #include <DeviceConfig.h>
@@ -30,10 +32,12 @@ private:
   
   // GPS time tracking
   uint32_t lastGPSSecond;       // GPS time in whole seconds
-  uint32_t lastPPSMicros;       // micros() when PPS pulse arrived
-  bool synchronized;
+  volatile uint32_t lastPPSMicros;       // micros() when PPS pulse arrived
+  volatile bool synchronized;
+  volatile bool newPPS;
   
   // Calculate current time with microsecond precision
+  
   uint32_t getCurrentTimeMillis() const;
   uint32_t getCurrentTimeMicros() const;
   
@@ -63,3 +67,18 @@ public:
 };
 
 #endif
+
+
+/**
+ * system workflow:
+ * 1. Rising pin from PPS on the start of each second. 
+ * 2. Micros() is called immmediately to save a reference time for when the PPS rising edge was.
+ * 3. Based on device ID, each device knows when to read, and then when to 
+ * 
+ */
+
+
+//  void setup() {
+//   pinMode(PPS_PIN, INPUT);
+//   attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPPS, RISING);
+// }
