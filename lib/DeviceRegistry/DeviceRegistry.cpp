@@ -14,12 +14,8 @@ void DeviceRegistry::addGPSHistory(float lat, float lon, uint32_t ts) {
   if (historyCount < MAX_HISTORY_SEC) historyCount++;
 }
 
-bool DeviceRegistry::getGPSHistory(uint8_t index, float &lat, float &lon) {
-  if (index >= historyCount) return false;
-  uint8_t idx = (historyIndex + MAX_HISTORY_SEC - historyCount + index) % MAX_HISTORY_SEC;
-  lat = history[idx].latitude;
-  lon = history[idx].longitude;
-  return true;
+const GPSHistory* DeviceRegistry::getGPSHistoryArray() {
+  return history;
 }
 
 uint8_t DeviceRegistry::getHistoryCount() {
@@ -82,9 +78,14 @@ void DeviceRegistry::updateBuoy(uint8_t id, float distance, float heading) {
 
 int DeviceRegistry::findBuoy(uint8_t id) {
   for (int i = 0; i < MAX_BUOY; i++) {
-    if (buoys[i].id == id) return i;
+    if (buoys[i].id == id+MAX_BOAT) return i;
   }
   return -1;
+}
+
+float DeviceRegistry::getBuoyID(uint8_t id) {
+  int idx = findBuoy(id);
+  return (idx >= 0) ? buoys[idx].id : -1.0f;
 }
 
 float DeviceRegistry::getBuoyDistance(uint8_t id) {

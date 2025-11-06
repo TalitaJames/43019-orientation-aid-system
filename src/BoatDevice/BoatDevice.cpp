@@ -7,6 +7,7 @@
 #include <Navigation.h>
 #include <Protocol.h>
 #include <TDMAScheduler.h>
+#include <TTS.h>
 
 #define MaxDevice (DeviceConfig::MaxDeviceNumber)
 #define MaxBoat (DeviceConfig::MaxBoatNumber)
@@ -19,18 +20,25 @@ LoRaManager lora;
 PositionPacket packet;
 Navigation* nav = nullptr;
 TDMAScheduler* tdma = nullptr;
+TTS tts;
 String name;
 uint8_t ID;
 float dist;
 float myLat, myLon;
-uint16_t heading;
+uint16_t boatheading;
+uint16_t buoyheading;
+uint16_t expectheading;
 uint32_t ts;
 float danger_dist = 20;
 uint16_t lastGPSLog = 0;
+uint8_t target;
+uint8_t start;
+uint8_t now;
 
 void setup() {
   //startup procedure
   Serial.begin(115200);
+  tts.begin();
 
   // Load stored configuration
   if (config.begin()) {
@@ -62,17 +70,20 @@ void setup() {
 
   Serial.println(name);
   Serial.println(" Setup complete!");
+  start = micros();
 }
 
 void loop () {
+  now = micros();
   // Update GPS data
   gps.update();
   if (gps.getPosition(myLat, myLon)) {
-    heading = gps.getHeading();
     ts = gps.getGPSTimeMillis();
     // Every second, log your own GPS
     if (millis() - lastGPSLog >= 1000) {
       registry.addGPSHistory(myLat, myLon, millis());
+      // Calculate boat heading based on GPS history
+      boatheading = nav->computeHeadingTrend(registry.getGPSHistoryArray(), registry.getHistoryCount());
       lastGPSLog = millis();
     }
   }
@@ -82,7 +93,7 @@ void loop () {
     Serial.println("Attempting send protocol...");
     // Create packet and send
     PositionPacket send_packet = Protocol::createPositionPacket(
-        DEVICE_TYPE_BOAT, ID, myLat, myLon, heading, ts
+        DEVICE_TYPE_BOAT, ID, myLat, myLon, boatheading, ts
     );
 
     if (lora.transmit(send_packet)) {
@@ -92,12 +103,18 @@ void loop () {
   }
   else {
     lora.startReceive();
-    Serial.println("Listening...");
+    if (now - start > 2000000) {
+      Serial.println("Listening...");
+      start = micros();
+    }
   }
   
   // Debug function
   if (lora.receive(packet)) {
-    Serial.println("Found packet!");
+      if (now - start > 2000000) {
+        Serial.println("Found packet!");
+        start = micros();
+      }
     /*
     Serial.println("---- Position Packet ----");
     Serial.print("Device Type: "); Serial.println(packet.deviceType);
@@ -121,29 +138,41 @@ void loop () {
         registry.updateBoat(packet.deviceID, dist);
       } else if (packet.deviceType == DEVICE_TYPE_BUOY) {
         dist = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
-        // Calculate heading here
-        heading = 0;
-        registry.updateBuoy(packet.deviceID, dist, heading);
+        buoyheading = nav->bearingTo(myLat, myLon, packet.latitude, packet.longitude);
+        registry.updateBuoy(packet.deviceID, dist, buoyheading);
       }
     }
   }
 
   //initiate beeper for boat
-  for (int i = 0; i < DeviceConfig::MaxBoatNumber; i++) {
+  for (int i = 0; i < MaxBoat; i++) {
     float d = registry.getBoatDistance(i);
     if (d > 0 && d <= danger_dist) {
-      //turn on beeper or warning
+      tts.sayWarning();
     }
   }
 
   //decide target buoy as the one with smallest id
   //switch target to the closest higher id after passing the target
-
-  //prepare 'sentence' to output for spoken readings. 
-
+  float prevd = 100;
+  for (int i = 0; i < MaxBuoy; i++) {
+    float d = registry.findBuoy(i);
+    if (d < prevd) {
+      target = registry.getBuoyID(i);
+    }
+  }
+  
   //if button pressed, output reading
+  if (1 == 2){
+    dist = registry.getBuoyDistance(target);
+    buoyheading = registry.getBuoyHeading(target);
+    expectheading = abs(boatheading - buoyheading);
+    tts.sayReport(expectheading, dist);
+  }
 
   //shutdown procedure
+  uint8_t finish = micros();
+  Serial.println(finish - now);
 }
 
 /* 

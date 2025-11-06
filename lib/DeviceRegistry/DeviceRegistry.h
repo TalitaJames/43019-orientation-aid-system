@@ -50,7 +50,7 @@ public:
 
   // ===== GPS History =====
   void addGPSHistory(float lat, float lon, uint32_t ts);
-  bool getGPSHistory(uint8_t index, float &lat, float &lon);
+  const GPSHistory* getGPSHistoryArray();
   uint8_t getHistoryCount();
 
   // ===== Boat Management =====
@@ -61,6 +61,7 @@ public:
   // ===== Buoy Management =====
   void updateBuoy(uint8_t id, float distance, float heading);
   int findBuoy(uint8_t id);
+  float getBuoyID(uint8_t id);
   float getBuoyDistance(uint8_t id);
   float getBuoyHeading(uint8_t id);
 };

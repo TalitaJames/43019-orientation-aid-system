@@ -10,7 +10,6 @@
 
 #include <Arduino.h>
 #include <RadioLib.h>
-#include <LoRa.h>
 #include <Protocol.h>
 
 // LoRa pin definitions (adjust for your board)
