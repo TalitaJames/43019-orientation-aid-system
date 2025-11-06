@@ -1,4 +1,4 @@
-
+// Include all libraries
 #include <Arduino.h>
 #include <DeviceConfig.h>
 #include <DeviceRegistry.h>
@@ -14,6 +14,7 @@
 #define MaxBuoy (DeviceConfig::MaxBuoyNumber)
 #define PPS_PIN 4
 
+// Library objects
 DeviceConfig config;
 DeviceRegistry registry;
 GPSManager gps;
@@ -22,6 +23,8 @@ PositionPacket packet;
 Navigation* nav = nullptr;
 TDMAScheduler* tdma = nullptr;
 TTS tts;
+
+// Global Variables
 String name;
 uint8_t ID;
 float dist;
@@ -31,12 +34,14 @@ uint16_t buoyheading;
 uint16_t expectheading;
 uint32_t ts;
 float danger_dist = 20;
-
-//GLOBAL VARIABLES
+uint16_t lastGPSLog = 0;
+uint8_t target;
+uint8_t start;
+uint8_t now;
 volatile unsigned long lastPPSTime = 0;
 volatile bool ppsTriggered = false;
 
-//
+// Interrupt function
 void IRAM_ATTR onPPS() { //this should be in main?
   unsigned long now = micros();
   //Debounce: ignore if less than 500ms since last 
@@ -44,26 +49,6 @@ void IRAM_ATTR onPPS() { //this should be in main?
     tdma->onPPSInterrupt(now);
   }
 }
-
-void updateDevice(uint8_t id, float distance) {
-  // Check if device already exists
-  for (int i = 0; i < deviceCount; i++) {
-    if (devices[i].id == id) {
-      devices[i].distance = distance;
-      return;
-    }
-  }
-  // Add new device if space available
-  if (deviceCount < MaxDevice) {
-    devices[deviceCount].id = id;
-    devices[deviceCount].distance = distance;
-    deviceCount++;
-  }
-}
-uint16_t lastGPSLog = 0;
-uint8_t target;
-uint8_t start;
-uint8_t now;
 
 void setup() {
   //startup procedure
@@ -128,7 +113,7 @@ void loop () {
     Serial.println("Attempting send protocol...");
     // Create packet and send
     PositionPacket send_packet = Protocol::createPositionPacket(
-        DEVICE_TYPE_BOAT, ID, myLat, myLon, heading, ts);
+        DEVICE_TYPE_BOAT, ID, myLat, myLon, boatheading, ts);
 
     if (lora.transmit(send_packet)) {
         Serial.println(name);
@@ -138,10 +123,6 @@ void loop () {
 
   //receive slot 
   else {
-    if(lora.receive(packet)) {
-      Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
-      
-    }
     lora.startReceive();
     if (now - start > 2000000) {
       Serial.println("Listening...");
@@ -151,10 +132,11 @@ void loop () {
   
   // Debug function
   if (lora.receive(packet)) {
-      if (now - start > 2000000) {
-        Serial.println("Found packet!");
-        start = micros();
-      }
+    Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
+    if (now - start > 2000000) {
+      Serial.println("Found packet!");
+      start = micros();
+    }
     /*
     Serial.println("---- Position Packet ----");
     Serial.print("Device Type: "); Serial.println(packet.deviceType);
