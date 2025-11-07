@@ -8,14 +8,11 @@ int isrcount = 0;
  *
  */
 void buttonSetup(){
-    // pinMode(LED_PIN, OUTPUT); //debug led
-    // ledStatus = false;
-    // digitalWrite(LED_PIN, ledStatus);
-
     // initialize the pushbutton pin as an input:
     pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-    interrupts(); //enables use of interupts
+    //enables use of interupts and attach the button to its isr
+    interrupts();
     attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonInterrupt, CHANGE);
     speakReading = false;
 
@@ -27,15 +24,7 @@ void buttonSetup(){
  *
  */
 void IRAM_ATTR buttonInterrupt(){
-    detachInterrupt(digitalPinToInterrupt(BUTTON_PIN));
-    isrcount++;
     speakReading = true;
-
-    Serial.print("Button Interupt ");
-    Serial.println(isrcount);
-    // delay(1*1000);
-    // tts.sayReport(0,10);
-    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonInterrupt, CHANGE);
 }
 
 /**
@@ -46,8 +35,6 @@ void debugButton(){
     int btnStatus = !((boolean) digitalRead(BUTTON_PIN));
     Serial.print("btnStatus: ");
     Serial.print(btnStatus);
-    // Serial.print("\tledStatus: ");
-    // Serial.print(ledStatus);
 
     if (btnStatus){
         Serial.print("\tButton Pressed");

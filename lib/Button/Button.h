@@ -13,7 +13,7 @@
 #define BUTTON_PIN 12
 // #define LED_PIN 22
 
-extern bool speakReading;
+extern bool speakReading; // boolean flag to indicate speaker should talk
 
 void IRAM_ATTR buttonInterrupt();
 void buttonSetup();
