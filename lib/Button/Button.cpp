@@ -1,6 +1,7 @@
 #include "Button.h"
 
-boolean ledStatus;
+boolean speakReading = false;
+int isrcount = 0;
 
 /**
  * @brief Sets up interupts and functionality for the button
@@ -15,7 +16,8 @@ void buttonSetup(){
     pinMode(BUTTON_PIN, INPUT_PULLUP);
 
     interrupts(); //enables use of interupts
-    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonInterrupt, RISING);
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonInterrupt, CHANGE);
+    speakReading = false;
 
     Serial.println("Button Setup Complete");
 }
@@ -25,7 +27,15 @@ void buttonSetup(){
  *
  */
 void IRAM_ATTR buttonInterrupt(){
-    // digitalWrite(LED_PIN, HIGH);
+    detachInterrupt(digitalPinToInterrupt(BUTTON_PIN));
+    isrcount++;
+    speakReading = true;
+
+    Serial.print("Button Interupt ");
+    Serial.println(isrcount);
+    // delay(1*1000);
+    // tts.sayReport(0,10);
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonInterrupt, CHANGE);
 }
 
 /**

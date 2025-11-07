@@ -8,6 +8,7 @@
 #include <Protocol.h>
 #include <TDMAScheduler.h>
 #include <Button.h>
+#include <TTS.h>
 
 #define MaxDevice (DeviceConfig::MaxDeviceNumber)
 #define MaxBoat (DeviceConfig::MaxBoatNumber)
@@ -28,10 +29,12 @@ uint16_t heading;
 uint32_t ts;
 float danger_dist = 20;
 uint16_t lastGPSLog = 0;
+TTS tts;
 
 void setup() {
   //startup procedure
   Serial.begin(115200);
+  Serial.println("Starting Boat Setup");
 
   // Load stored configuration
   if (config.begin()) {
@@ -62,6 +65,7 @@ void setup() {
   tdma = new TDMAScheduler(ID, MaxDevice, 100);
 
   buttonSetup();
+  tts.begin();
   Serial.println(name);
   Serial.println(" Setup complete!");
 }
@@ -144,6 +148,10 @@ void loop () {
   //prepare 'sentence' to output for spoken readings. 
 
   //if button pressed, output reading
+  if(speakReading){
+    tts.sayReport(0,10);
+    speakReading = false;
+  }
 
   //shutdown procedure
 }

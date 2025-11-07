@@ -13,7 +13,7 @@
 #define BUTTON_PIN 12
 // #define LED_PIN 22
 
-// attachInterrupt(digitalPinToInterrupt(pin), ISR, mode)
+extern bool speakReading;
 
 void IRAM_ATTR buttonInterrupt();
 void buttonSetup();
