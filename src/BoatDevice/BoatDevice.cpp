@@ -149,6 +149,7 @@ void loop () {
 
   //if button pressed, output reading
   if(speakReading){
+    // TODO this is where the tts should give more specific gps information
     tts.sayReport(0,10);
     speakReading = false;
   }
