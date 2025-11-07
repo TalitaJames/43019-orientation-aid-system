@@ -7,6 +7,7 @@
 #include <Navigation.h>
 #include <Protocol.h>
 #include <TDMAScheduler.h>
+#include <Button.h>
 #include <TTS.h>
 
 #define MaxDevice (DeviceConfig::MaxDeviceNumber)
@@ -53,7 +54,6 @@ void IRAM_ATTR onPPS() { //this should be in main?
 void setup() {
   //startup procedure
   Serial.begin(115200);
-  tts.begin();
 
   // Load stored configuration
   if (config.begin()) {
@@ -86,6 +86,8 @@ void setup() {
   // Initialize TDMA Scheduler (up to 10 devices, 100ms per device)
   tdma = new TDMAScheduler(ID, MaxDevice, 100);
 
+  buttonSetup();
+  tts.begin();
   Serial.println(name);
   Serial.println(" Setup complete!");
   start = micros();
@@ -185,11 +187,13 @@ void loop () {
   }
   
   //if button pressed, output reading
-  if (1 == 2){
+  if(speakReading){
+    // TODO this is where the tts should give more specific gps information
     dist = registry.getBuoyDistance(target);
     buoyheading = registry.getBuoyHeading(target);
     expectheading = abs(boatheading - buoyheading);
     tts.sayReport(expectheading, dist);
+    speakReading = false;
   }
 
   //shutdown procedure
@@ -314,118 +318,118 @@ void loop() {
 */
 
 
-#include <Arduino.h>
-#include <RadioLib.h>
+// #include <Arduino.h>
+// #include <RadioLib.h>
 
-// --- Hardware Config ---
-#define LORA_CS    13
-#define LORA_DIO0  26
-#define LORA_RST   14
-#define LORA_DIO1  3
-#define PPS_PIN    27   // Example PPS pin
+// // --- Hardware Config ---
+// #define LORA_CS    13
+// #define LORA_DIO0  26
+// #define LORA_RST   14
+// #define LORA_DIO1  3
+// #define PPS_PIN    27   // Example PPS pin
 
-// --- Radio Setup ---
-SX1276 radio = new Module(LORA_CS, LORA_DIO0, LORA_RST, LORA_DIO1);
+// // --- Radio Setup ---
+// SX1276 radio = new Module(LORA_CS, LORA_DIO0, LORA_RST, LORA_DIO1);
 
-// --- Global Variables ---
-volatile unsigned long lastPPSTime = 0;
-volatile bool ppsTriggered = false;
+// // --- Global Variables ---
+// volatile unsigned long lastPPSTime = 0;
+// volatile bool ppsTriggered = false;
 
-void IRAM_ATTR onPPS() {
-  unsigned long now = micros();
-  // Debounce: ignore if less than 500 ms since last
-  if (now - lastPPSTime > 500000) {
-    lastPPSTime = now;
-    ppsTriggered = true;
-  }
-}
+// void IRAM_ATTR onPPS() {
+//   unsigned long now = micros();
+//   // Debounce: ignore if less than 500 ms since last
+//   if (now - lastPPSTime > 500000) {
+//     lastPPSTime = now;
+//     ppsTriggered = true;
+//   }
+// }
 
-// --- PPSDeviceScheduler Class ---
-class PPSDeviceScheduler {
-public:
-  int deviceID;
-  unsigned long slotDuration;
+// // --- PPSDeviceScheduler Class ---
+// class PPSDeviceScheduler {
+// public:
+//   int deviceID;
+//   unsigned long slotDuration;
 
-  PPSDeviceScheduler(int id, unsigned long slotMs = 100)
-    : deviceID(id), slotDuration(slotMs * 1000UL) {}
+//   PPSDeviceScheduler(int id, unsigned long slotMs = 100)
+//     : deviceID(id), slotDuration(slotMs * 1000UL) {}
 
-  void begin() {
-    pinMode(PPS_PIN, INPUT);
-    attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPPS, RISING);
+//   void begin() {
+//     pinMode(PPS_PIN, INPUT);
+//     attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPPS, RISING);
 
-    Serial.println("=== LoRa Device Scheduler ===");
-    Serial.print("Device ID: "); Serial.println(deviceID);
-  }
+//     Serial.println("=== LoRa Device Scheduler ===");
+//     Serial.print("Device ID: "); Serial.println(deviceID);
+//   }
 
-  void loop() {
-    if (ppsTriggered) {
-      ppsTriggered = false;
-      unsigned long baseTime = lastPPSTime;
+//   void loop() {
+//     if (ppsTriggered) {
+//       ppsTriggered = false;
+//       unsigned long baseTime = lastPPSTime;
 
-      unsigned long slotStart = baseTime + (deviceID - 1) * slotDuration;
-      unsigned long slotEnd   = slotStart + slotDuration;
+//       unsigned long slotStart = baseTime + (deviceID - 1) * slotDuration;
+//       unsigned long slotEnd   = slotStart + slotDuration;
 
-      while (micros() < slotStart) {
-        // wait until our time slot
-      }
+//       while (micros() < slotStart) {
+//         // wait until our time slot
+//       }
       
-      executeSlot();
-    }
-  }
+//       executeSlot();
+//     }
+//   }
 
-  void executeSlot() {
-  unsigned long tStart = micros();
-  String message = "Hello from device " + String(deviceID);
+//   void executeSlot() {
+//   unsigned long tStart = micros();
+//   String message = "Hello from device " + String(deviceID);
 
-  // Convert to char buffer if needed by your LoRa function
-  int state = radio.transmit(message);
-  unsigned long tEnd = micros();
+//   // Convert to char buffer if needed by your LoRa function
+//   int state = radio.transmit(message);
+//   unsigned long tEnd = micros();
 
-  Serial.println("---- Slot Diagnostics ----");
-  Serial.print("Started at: "); 
-  Serial.print(tStart - lastPPSTime); 
-  Serial.println(" us after PPS");
+//   Serial.println("---- Slot Diagnostics ----");
+//   Serial.print("Started at: "); 
+//   Serial.print(tStart - lastPPSTime); 
+//   Serial.println(" us after PPS");
 
-  Serial.print("Ended at:   "); 
-  Serial.print(tEnd - lastPPSTime); 
-  Serial.println(" us after PPS");
+//   Serial.print("Ended at:   "); 
+//   Serial.print(tEnd - lastPPSTime); 
+//   Serial.println(" us after PPS");
 
-  Serial.print("Transmission duration: "); 
-  Serial.print(tEnd - tStart); 
-  Serial.println(" us");
+//   Serial.print("Transmission duration: "); 
+//   Serial.print(tEnd - tStart); 
+//   Serial.println(" us");
 
-  if (state == RADIOLIB_ERR_NONE)
-    Serial.println("✓ Transmission OK");
-  else {
-    Serial.print("✗ Transmission failed, code: ");
-    Serial.println(state);
-  }
+//   if (state == RADIOLIB_ERR_NONE)
+//     Serial.println("✓ Transmission OK");
+//   else {
+//     Serial.print("✗ Transmission failed, code: ");
+//     Serial.println(state);
+//   }
 
-  Serial.println("--------------------------");
-}
+//   Serial.println("--------------------------");
+// }
 
 
-};
+// };
 
-// --- Instantiate the Device ---
-PPSDeviceScheduler scheduler(5);  // Example: device 3 out of 10
+// // --- Instantiate the Device ---
+// PPSDeviceScheduler scheduler(5);  // Example: device 3 out of 10
 
-void setup() {
-  Serial.begin(115200);
-  delay(1500);
+// void setup() {
+//   Serial.begin(115200);
+//   delay(1500);
 
-  int state = radio.begin(915.0, 125.0, 7, 7, 0x12, 10, 8, 0);
-  if (state != RADIOLIB_ERR_NONE) {
-    Serial.println("LoRa init failed!");
-    while (true);
-  }
+//   int state = radio.begin(915.0, 125.0, 7, 7, 0x12, 10, 8, 0);
+//   if (state != RADIOLIB_ERR_NONE) {
+//     Serial.println("LoRa init failed!");
+//     while (true);
+//   }
 
-  scheduler.begin();
-}
+//   scheduler.begin();
+// }
 
-void loop() {
-  scheduler.loop();
-}
+// void loop() {
+//   scheduler.loop();
+// }
 
 
 
