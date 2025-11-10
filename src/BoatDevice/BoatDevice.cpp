@@ -1,4 +1,4 @@
-// Include all libraries
+// Include libraries
 #include <Arduino.h>
 #include <DeviceConfig.h>
 #include <DeviceRegistry.h>
@@ -9,10 +9,12 @@
 #include <TDMAScheduler.h>
 #include <TTS.h>
 
-#define MaxDevice (DeviceConfig::MaxDeviceNumber)
-#define MaxBoat (DeviceConfig::MaxBoatNumber)
-#define MaxBuoy (DeviceConfig::MaxBuoyNumber)
-#define PPS_PIN 4
+// Definitions
+#define MaxDevice (DeviceConfig::MaxDeviceNumber) // 10 devices maximum
+#define MaxBoat (DeviceConfig::MaxBoatNumber) // 8 boats
+#define MaxBuoy (DeviceConfig::MaxBuoyNumber) // 2 buoys. this might not even need to be included in the boat executable.
+#define PPS_PIN 27 // PPS pin. used for interrupts. 
+#define DANGER_DISTANCE_M 20 // Set proximity distance for when neighbouring boats are too close. 
 
 // Library objects
 DeviceConfig config;
@@ -24,16 +26,16 @@ Navigation* nav = nullptr;
 TDMAScheduler* tdma = nullptr;
 TTS tts;
 
-// Global Variables
-String name;
-uint8_t ID;
-float dist;
-float myLat, myLon;
-uint16_t boatheading;
-uint16_t buoyheading;
-uint16_t expectheading;
+// Global variables
+String name; // Device name. used for print statements.  
+uint8_t device_ID; // ID of the device. Configured by setDevice. 
+float distanceToTarget; //
+float myLat, myLon; // Devices own geographical coordinates. 
+uint16_t boatHeading; // Devices own current heading. 
+uint16_t buoyHeading; // Bearing from boat to buoy. 
+uint16_t expectHeading; //
 uint32_t ts;
-float danger_dist = 20;
+float danger_dist = DANGER_DISTANCE_M;
 uint16_t lastGPSLog = 0;
 uint8_t target;
 uint8_t start;
@@ -41,24 +43,34 @@ uint8_t now;
 volatile unsigned long lastPPSTime = 0;
 volatile bool ppsTriggered = false;
 
-// Interrupt function
-void IRAM_ATTR onPPS() { //this should be in main?
+/**
+ * Interrupt function. 
+ * IRAM_ATTR tells linker to insert function into isntruction RAM. makes execution significantly faster. 
+ * When PPS pin rises, interrupt function will commence. 
+ */
+void IRAM_ATTR onPPS() {
   unsigned long now = micros();
-  //Debounce: ignore if less than 500ms since last 
-  if (now - lastPPSTime > 500000) { //if there is noise with the PPS signal, we don't listen to it if the time is too close. 
+  // Debounce: ignore if less than 500ms since last 
+  if (now - lastPPSTime > 500000) { // If there is noise with the PPS signal, we don't listen to it if the two instances are too frequent. 
     tdma->onPPSInterrupt(now);
   }
 }
 
+
+/**
+ * Setup procedure. 
+ * Deals with initialising classes and device components to ensure they are operational. 
+ */
 void setup() {
-  //startup procedure
   Serial.begin(115200);
+
+  // Initialise TTS
   tts.begin();
 
-  // Load stored configuration
+  // Load stored device configuration
   if (config.begin()) {
     name = config.getDeviceName();
-    ID = config.getDeviceID();
+    device_ID = config.getDeviceID();
   } else {
     Serial.println(name);
     Serial.print(" config failed to start!");
@@ -77,20 +89,28 @@ void setup() {
     while (true);
   }
 
-  // Initialize Navigation system using arbitrary reference (updated later)
+  // Initialize navigation system using local (Central, Sydney) reference latitude for precise coordinate data. 
   nav = new Navigation(-33.8688);
 
+  // Define interrupt pins for PPS. 
   pinMode(PPS_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPPS, RISING);
 
-  // Initialize TDMA Scheduler (up to 10 devices, 100ms per device)
-  tdma = new TDMAScheduler(ID, MaxDevice, 100);
+  // Initialize TDMA Scheduler (up to 10 devices, 100ms per device).
+  tdma = new TDMAScheduler(device_ID, MaxDevice, 100);
 
   Serial.println(name);
   Serial.println(" Setup complete!");
+
   start = micros();
 }
 
+
+
+/**
+ * Loop. 
+ * 
+ */
 void loop () {
   now = micros();
   // Update GPS data
@@ -100,10 +120,10 @@ void loop () {
   if (gps.getPosition(myLat, myLon)) {
     ts = gps.getGPSTimeMillis();
     // Every second, log your own GPS
-    if (millis() - lastGPSLog >= 1000) {
+    if (millis() - lastGPSLog >= 1000) { 
       registry.addGPSHistory(myLat, myLon, millis());
       // Calculate boat heading based on GPS history
-      boatheading = nav->computeHeadingTrend(registry.getGPSHistoryArray(), registry.getHistoryCount());
+      boatHeading = nav->computeHeadingTrend(registry.getGPSHistoryArray(), registry.getHistoryCount());
       lastGPSLog = millis();
     }
   }
@@ -113,7 +133,7 @@ void loop () {
     Serial.println("Attempting send protocol...");
     // Create packet and send
     PositionPacket send_packet = Protocol::createPositionPacket(
-        DEVICE_TYPE_BOAT, ID, myLat, myLon, boatheading, ts);
+        DEVICE_TYPE_BOAT, device_ID, myLat, myLon, boatHeading, ts);
 
     if (lora.transmit(send_packet)) {
         Serial.println(name);
@@ -124,7 +144,7 @@ void loop () {
   //receive slot 
   else {
     lora.startReceive();
-    if (now - start > 2000000) {
+    if (now - start > 1000000) {
       Serial.println("Listening...");
       start = micros();
     }
@@ -134,7 +154,7 @@ void loop () {
   if (lora.receive(packet)) {
     Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
     if (now - start > 2000000) {
-      Serial.println("Found packet!");
+      Serial.println("Found packet!"); //these debug statements should be inside the class files. 
       start = micros();
     }
     /*
@@ -153,15 +173,15 @@ void loop () {
 
   
   // Calculate euclidean distance when receiving packets
-  if (lora.receive(packet) && packet.deviceID != ID) {
+  if (lora.receive(packet) && packet.deviceID != device_ID) {
     if (gps.getPosition(myLat, myLon)) {
-      if (packet.deviceType == DEVICE_TYPE_BOAT && packet.deviceID != ID) {
-        dist = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
-        registry.updateBoat(packet.deviceID, dist);
+      if (packet.deviceType == DEVICE_TYPE_BOAT && packet.deviceID != device_ID) {
+        distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
+        registry.updateBoat(packet.deviceID, distanceToTarget);
       } else if (packet.deviceType == DEVICE_TYPE_BUOY) {
-        dist = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
-        buoyheading = nav->bearingTo(myLat, myLon, packet.latitude, packet.longitude);
-        registry.updateBuoy(packet.deviceID, dist, buoyheading);
+        distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
+        buoyHeading = nav->bearingTo(myLat, myLon, packet.latitude, packet.longitude);
+        registry.updateBuoy(packet.deviceID, distanceToTarget, buoyHeading);
       }
     }
   }
@@ -186,254 +206,13 @@ void loop () {
   
   //if button pressed, output reading
   if (1 == 2){
-    dist = registry.getBuoyDistance(target);
-    buoyheading = registry.getBuoyHeading(target);
-    expectheading = abs(boatheading - buoyheading);
-    tts.sayReport(expectheading, dist);
+    distanceToTarget = registry.getBuoyDistance(target);
+    buoyHeading = registry.getBuoyHeading(target);
+    expectHeading = abs(boatHeading - buoyHeading);
+    tts.sayReport(expectHeading, distanceToTarget);
   }
 
   //shutdown procedure
   uint8_t finish = micros();
   Serial.println(finish - now);
 }
-
-/* 
-//Test loop for send and receive LORA without gps
-void loop(){
-  if (tdma && tdma->canTransmit()) {
-    float lat, lon;
-    lat = 1;
-    lon = 2;
-    uint16_t heading = 100;
-    uint32_t ts = 1000;
-
-    // Create packet and send
-    PositionPacket packet = Protocol::createPositionPacket(
-        DEVICE_TYPE_BUOY, ID, lat, lon, heading, ts
-    );
-
-    if (lora.transmit(packet)) {
-        Serial.println(name);
-        Serial.print(" packet sent!");
-    }
-  } 
-  else {
-    PositionPacket packet;
-    lora.startReceive();
-    Serial.println("Listening...");
-    if (lora.receive(packet)) {
-      Serial.println("Found packet!");
-    }
-  }
-  delay(200);
-}
-*/
-///////////////////////////////////////////////////////////////////
-/*
-#include <Arduino.h>
-#include <RadioLib.h>
- 
-// Pin definitions - adjust these to match your hardware
-
-#define LORA_CS    13
-#define LORA_DIO0  26
-#define LORA_RST   14
-#define LORA_DIO1  3
- 
-SX1276 radio = new Module(LORA_CS, LORA_DIO0, LORA_RST, LORA_DIO1);
- 
-void setup() {
-  Serial.begin(115200);
-  delay(2000);
-  Serial.println("=== LoRa Test - Device 2 (Receiver) ===");
-  Serial.print("Initializing LoRa... ");
-
-  // Initialize with EXACT same parameters as Device 1
-  int state = radio.begin(
-    915.0,   // Frequency (MHz)
-    125.0,   // Bandwidth (kHz)
-    7,       // Spreading factor
-    7,       // Coding rate (4/7)
-    0x12,    // Sync word
-    10,      // Output power (dBm)
-    8,       // Preamble length
-    0        // Gain (0 = auto)
-  );
-
-  if (state != RADIOLIB_ERR_NONE) {
-    Serial.print("FAILED! Error code: ");
-    Serial.println(state);
-    while (true);
-  }
-
-  Serial.println("SUCCESS!");
-  Serial.println("Listening for messages...\n");
-
-  // Start receiving
-  radio.startReceive();
-}
- 
-void loop() {
-  // Check if something was received
-  if (radio.getPacketLength() > 0) {
-    String message;
-    int state = radio.readData(message);
-    if (state == RADIOLIB_ERR_NONE) {
-      Serial.println(message);
-    } else {
-      Serial.print("✗ Read failed, code: ");
-      Serial.println(state);
-    }
-
-    // Go back to receive mode
-    radio.startReceive();
-  }
-  delay(100);  // Small delay to prevent CPU hogging
-}
-
-////////////////////////////////////////////////////////////////////////
- 
-void loop() {
-  String message = "Hello World 1";
-  
-  Serial.print("Sending: ");
-  Serial.println(message);
-  
-  int state = radio.transmit(message);
-  
-  if (state == RADIOLIB_ERR_NONE) {
-    Serial.println("✓ Transmitted successfully!");
-  } else {
-    Serial.print("✗ Transmission failed, code: ");
-    Serial.println(state);
-  }
-  
-  Serial.println("---");
-  delay(2000);  // Send every 2 seconds
-}
-*/
-
-
-#include <Arduino.h>
-#include <RadioLib.h>
-
-// --- Hardware Config ---
-#define LORA_CS    13
-#define LORA_DIO0  26
-#define LORA_RST   14
-#define LORA_DIO1  3
-#define PPS_PIN    27   // Example PPS pin
-
-// --- Radio Setup ---
-SX1276 radio = new Module(LORA_CS, LORA_DIO0, LORA_RST, LORA_DIO1);
-
-// --- Global Variables ---
-volatile unsigned long lastPPSTime = 0;
-volatile bool ppsTriggered = false;
-
-void IRAM_ATTR onPPS() {
-  unsigned long now = micros();
-  // Debounce: ignore if less than 500 ms since last
-  if (now - lastPPSTime > 500000) {
-    lastPPSTime = now;
-    ppsTriggered = true;
-  }
-}
-
-// --- PPSDeviceScheduler Class ---
-class PPSDeviceScheduler {
-public:
-  int deviceID;
-  unsigned long slotDuration;
-
-  PPSDeviceScheduler(int id, unsigned long slotMs = 100)
-    : deviceID(id), slotDuration(slotMs * 1000UL) {}
-
-  void begin() {
-    pinMode(PPS_PIN, INPUT);
-    attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPPS, RISING);
-
-    Serial.println("=== LoRa Device Scheduler ===");
-    Serial.print("Device ID: "); Serial.println(deviceID);
-  }
-
-  void loop() {
-    if (ppsTriggered) {
-      ppsTriggered = false;
-      unsigned long baseTime = lastPPSTime;
-
-      unsigned long slotStart = baseTime + (deviceID - 1) * slotDuration;
-      unsigned long slotEnd   = slotStart + slotDuration;
-
-      while (micros() < slotStart) {
-        // wait until our time slot
-      }
-      
-      executeSlot();
-    }
-  }
-
-  void executeSlot() {
-  unsigned long tStart = micros();
-  String message = "Hello from device " + String(deviceID);
-
-  // Convert to char buffer if needed by your LoRa function
-  int state = radio.transmit(message);
-  unsigned long tEnd = micros();
-
-  Serial.println("---- Slot Diagnostics ----");
-  Serial.print("Started at: "); 
-  Serial.print(tStart - lastPPSTime); 
-  Serial.println(" us after PPS");
-
-  Serial.print("Ended at:   "); 
-  Serial.print(tEnd - lastPPSTime); 
-  Serial.println(" us after PPS");
-
-  Serial.print("Transmission duration: "); 
-  Serial.print(tEnd - tStart); 
-  Serial.println(" us");
-
-  if (state == RADIOLIB_ERR_NONE)
-    Serial.println("✓ Transmission OK");
-  else {
-    Serial.print("✗ Transmission failed, code: ");
-    Serial.println(state);
-  }
-
-  Serial.println("--------------------------");
-}
-
-
-};
-
-// --- Instantiate the Device ---
-PPSDeviceScheduler scheduler(5);  // Example: device 3 out of 10
-
-void setup() {
-  Serial.begin(115200);
-  delay(1500);
-
-  int state = radio.begin(915.0, 125.0, 7, 7, 0x12, 10, 8, 0);
-  if (state != RADIOLIB_ERR_NONE) {
-    Serial.println("LoRa init failed!");
-    while (true);
-  }
-
-  scheduler.begin();
-}
-
-void loop() {
-  scheduler.loop();
-}
-
-
-
-
-// onPPS() interrupt → tells TDMA that a new cycle started
-// loop():
-//     tdma.update()
-//     if (tdma.canTransmit())
-//          doTransmit()
-//     else
-//          doReceive()
