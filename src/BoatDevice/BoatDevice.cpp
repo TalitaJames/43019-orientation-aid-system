@@ -7,6 +7,7 @@
 #include <Navigation.h>
 #include <Protocol.h>
 #include <TDMAScheduler.h>
+#include <Button.h>
 #include <TTS.h>
 
 // Definitions
@@ -64,9 +65,6 @@ void IRAM_ATTR onPPS() {
 void setup() {
   Serial.begin(115200);
 
-  // Initialise TTS
-  tts.begin();
-
   // Load stored device configuration
   if (config.begin()) {
     name = config.getDeviceName();
@@ -99,6 +97,8 @@ void setup() {
   // Initialize TDMA Scheduler (up to 10 devices, 100ms per device).
   tdma = new TDMAScheduler(device_ID, MaxDevice, 100);
 
+  buttonSetup();
+  tts.begin();
   Serial.println(name);
   Serial.println(" Setup complete!");
 
@@ -205,11 +205,13 @@ void loop () {
   }
   
   //if button pressed, output reading
-  if (1 == 2){
-    distanceToTarget = registry.getBuoyDistance(target);
-    buoyHeading = registry.getBuoyHeading(target);
-    expectHeading = abs(boatHeading - buoyHeading);
-    tts.sayReport(expectHeading, distanceToTarget);
+  if(speakReading){
+    // TODO this is where the tts should give more specific gps information
+    dist = registry.getBuoyDistance(target);
+    buoyheading = registry.getBuoyHeading(target);
+    expectheading = abs(boatheading - buoyheading);
+    tts.sayReport(expectheading, dist);
+    speakReading = false;
   }
 
   //shutdown procedure
