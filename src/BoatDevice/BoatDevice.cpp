@@ -15,7 +15,6 @@
 #define MaxBoat (DeviceConfig::MaxBoatNumber) // 8 boats
 #define MaxBuoy (DeviceConfig::MaxBuoyNumber) // 2 buoys. this might not even need to be included in the boat executable.
 #define PPS_PIN 27 // PPS pin. used for interrupts. 
-#define DANGER_DISTANCE_M 20 // Set proximity distance for when neighbouring boats are too close. 
 
 // Library objects
 DeviceConfig config;
@@ -27,6 +26,9 @@ Navigation* nav = nullptr;
 TDMAScheduler* tdma = nullptr;
 TTS tts;
 
+// Constants
+const float DANGER_DISTANCE_M = 20.0f;
+
 // Global variables
 String name; // Device name. used for print statements.  
 uint8_t device_ID; // ID of the device. Configured by setDevice. 
@@ -34,13 +36,11 @@ float distanceToTarget; //
 float myLat, myLon; // Devices own geographical coordinates. 
 uint16_t boatHeading; // Devices own current heading. 
 uint16_t buoyHeading; // Bearing from boat to buoy. 
-uint16_t expectHeading; //
+uint16_t expectHeading; // 
 uint32_t ts;
-float danger_dist = DANGER_DISTANCE_M;
-uint16_t lastGPSLog = 0;
+uint32_t lastGPSLog = 0;
 uint8_t target;
-uint8_t start;
-uint8_t now;
+
 volatile unsigned long lastPPSTime = 0;
 volatile bool ppsTriggered = false;
 
@@ -50,10 +50,10 @@ volatile bool ppsTriggered = false;
  * When PPS pin rises, interrupt function will commence. 
  */
 void IRAM_ATTR onPPS() {
-  unsigned long now = micros();
+  unsigned long now_us = micros();
   // Debounce: ignore if less than 500ms since last 
-  if (now - lastPPSTime > 500000) { // If there is noise with the PPS signal, we don't listen to it if the two instances are too frequent. 
-    tdma->onPPSInterrupt(now);
+  if (now_us - lastPPSTime > 500000) { // If there is noise with the PPS signal, we don't listen to it if the two instances are too frequent. 
+    tdma->onPPSInterrupt(now_us);
   }
 }
 
@@ -64,6 +64,8 @@ void IRAM_ATTR onPPS() {
  */
 void setup() {
   Serial.begin(115200);
+  
+  delay(1000);
 
   // Load stored device configuration
   if (config.begin()) {
@@ -80,6 +82,7 @@ void setup() {
     Serial.print(" GPS failed to start!");
     while (true);
   }
+
   // Initialize LoRa
   if (!lora.begin()) {
     Serial.println(name);
@@ -97,38 +100,36 @@ void setup() {
   // Initialize TDMA Scheduler (up to 10 devices, 100ms per device).
   tdma = new TDMAScheduler(device_ID, MaxDevice, 100);
 
+  // Initialise button 
   buttonSetup();
   tts.begin();
-  Serial.println(name);
-  Serial.println(" Setup complete!");
 
-  start = micros();
+  lastGPSLog = millis() - 1000;
+
+  Serial.println(" Setup complete!");
 }
 
 
-
 /**
- * Loop. 
+ * Main loop. 
  * 
  */
 void loop () {
-  now = micros();
-  // Update GPS data
-  gps.update();
+  unsigned long now_us = micros();   // For TDMA & precise scheduling
+  unsigned long now_ms = millis();   // For logging and human-scale timing
 
-  //update position data
-  if (gps.getPosition(myLat, myLon)) {
-    ts = gps.getGPSTimeMillis();
-    // Every second, log your own GPS
-    if (millis() - lastGPSLog >= 1000) { 
+  // --- GPS Update ---
+  gps.update(); 
+  if (now_ms - lastGPSLog >= 1000) { 
+    if (gps.getPosition(myLat, myLon)) { // Every second, log your own GPS
+      ts = gps.getGPSTimeMillis();
       registry.addGPSHistory(myLat, myLon, millis());
-      // Calculate boat heading based on GPS history
-      boatHeading = nav->computeHeadingTrend(registry.getGPSHistoryArray(), registry.getHistoryCount());
-      lastGPSLog = millis();
+      boatHeading = nav->computeHeadingTrend(registry.getGPSHistoryArray(), registry.getHistoryCount()); // Calculate boat heading based on GPS history
+      lastGPSLog = now_ms;
     }
   }
 
-  // transmit slot 
+  // --- TDMA: Transmit or Receive ---
   if (tdma && tdma->canTransmit()) {
     Serial.println("Attempting send protocol...");
     // Create packet and send
@@ -136,44 +137,47 @@ void loop () {
         DEVICE_TYPE_BOAT, device_ID, myLat, myLon, boatHeading, ts);
 
     if (lora.transmit(send_packet)) {
-        Serial.println(name);
-        Serial.print(" packet sent!");
+        Serial.println(name + " packet sent!");
     }
   }
 
-  //receive slot 
-  else {
-    lora.startReceive();
-    if (now - start > 1000000) {
-      Serial.println("Listening...");
-      start = micros();
-    }
-  }
+  // else {
+  //   // Radio is already in receive mode from transmit() or previous loop
+  //   // Just check for incoming packets (handled later in your code)
+
+  //   // lora.startReceive();
+  //   // if (now - start > 1000000) {
+  //   //   Serial.println("Listening...");
+  //   //   start = micros();
+  //   // }
+
+  // }
   
-  // Debug function
-  if (lora.receive(packet)) {
-    Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
-    if (now - start > 2000000) {
-      Serial.println("Found packet!"); //these debug statements should be inside the class files. 
-      start = micros();
-    }
-    /*
-    Serial.println("---- Position Packet ----");
-    Serial.print("Device Type: "); Serial.println(packet.deviceType);
-    Serial.print("Device ID: "); Serial.println(packet.deviceID);
-    Serial.print("Latitude: "); Serial.println(packet.latitude, 6);
-    Serial.print("Longitude: "); Serial.println(packet.longitude, 6);
-    Serial.print("Heading: "); Serial.println(packet.heading);
-    Serial.print("Timestamp: "); Serial.println(packet.timestamp);
-    Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
-    Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
-    Serial.println("--------------------------");
-    */
-  }
+  // // Debug function
+  // if (lora.receive(packet)) {
+  //   Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
+  //   if (now - start > 2000000) {
+  //     Serial.println("Found packet!"); //these debug statements should be inside the class files. 
+  //     start = micros();
+  //   }
+  //   /*
+  //   Serial.println("---- Position Packet ----");
+  //   Serial.print("Device Type: "); Serial.println(packet.deviceType);
+  //   Serial.print("Device ID: "); Serial.println(packet.deviceID);
+  //   Serial.print("Latitude: "); Serial.println(packet.latitude, 6);
+  //   Serial.print("Longitude: "); Serial.println(packet.longitude, 6);
+  //   Serial.print("Heading: "); Serial.println(packet.heading);
+  //   Serial.print("Timestamp: "); Serial.println(packet.timestamp);
+  //   Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
+  //   Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
+  //   Serial.println("--------------------------");
+  //   */
+  // }
 
   
   // Calculate euclidean distance when receiving packets
-  if (lora.receive(packet) && packet.deviceID != device_ID) {
+  if (lora.receive(packet) && packet.deviceID != device_ID) { 
+    Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
     if (gps.getPosition(myLat, myLon)) {
       if (packet.deviceType == DEVICE_TYPE_BOAT && packet.deviceID != device_ID) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
@@ -189,7 +193,7 @@ void loop () {
   //initiate beeper for boat
   for (int i = 0; i < MaxBoat; i++) {
     float d = registry.getBoatDistance(i);
-    if (d > 0 && d <= danger_dist) {
+    if (d > 0 && d <= DANGER_DISTANCE_M) {
       tts.sayWarning();
     }
   }
@@ -207,14 +211,16 @@ void loop () {
   //if button pressed, output reading
   if(speakReading){
     // TODO this is where the tts should give more specific gps information
-    dist = registry.getBuoyDistance(target);
-    buoyheading = registry.getBuoyHeading(target);
-    expectheading = abs(boatheading - buoyheading);
-    tts.sayReport(expectheading, dist);
+    distanceToTarget = registry.getBuoyDistance(target);
+    buoyHeading = registry.getBuoyHeading(target);
+    expectHeading = abs(boatHeading - buoyHeading);
+    tts.sayReport(expectHeading, distanceToTarget);
     speakReading = false;
   }
 
   //shutdown procedure
-  uint8_t finish = micros();
-  Serial.println(finish - now);
+  unsigned long finish_ms = millis();
+  Serial.print("Loop time: ");
+  Serial.print(finish_ms - now_ms);
+  Serial.println(" ms");
 }
