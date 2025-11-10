@@ -211,8 +211,9 @@ void loop () {
   //if button pressed, output reading
   if(speakReading){
     // TODO this is where the tts should give more specific gps information
-    distanceToTarget = registry.getBuoyDistance(target);
+    //distanceToTarget = registry.getBuoyDistance(target);
     buoyHeading = registry.getBuoyHeading(target);
+    distanceToTarget = registry.getBoatDistance(1);
     expectHeading = abs(boatHeading - buoyHeading);
     tts.sayReport(expectHeading, distanceToTarget);
     speakReading = false;
@@ -220,7 +221,7 @@ void loop () {
 
   //shutdown procedure
   unsigned long finish_ms = millis();
-  Serial.print("Loop time: ");
-  Serial.print(finish_ms - now_ms);
-  Serial.println(" ms");
+  //Serial.print("Loop time: ");
+  //Serial.print(finish_ms - now_ms);
+  //Serial.println(" ms");
 }
