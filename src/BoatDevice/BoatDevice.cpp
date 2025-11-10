@@ -43,6 +43,7 @@ uint8_t target;
 
 volatile unsigned long lastPPSTime = 0;
 volatile bool ppsTriggered = false;
+volatile bool hasTransmittedThisCycle = false;
 
 /**
  * Interrupt function. 
@@ -54,6 +55,7 @@ void IRAM_ATTR onPPS() {
   // Debounce: ignore if less than 500ms since last 
   if (now_us - lastPPSTime > 500000) { // If there is noise with the PPS signal, we don't listen to it if the two instances are too frequent. 
     tdma->onPPSInterrupt(now_us);
+    hasTransmittedThisCycle = false;
   }
 }
 
@@ -133,11 +135,15 @@ void loop () {
   if (tdma && tdma->canTransmit()) {
     Serial.println("Attempting send protocol...");
     // Create packet and send
-    PositionPacket send_packet = Protocol::createPositionPacket(
-        DEVICE_TYPE_BOAT, device_ID, myLat, myLon, boatHeading, ts);
+    if (!hasTransmittedThisCycle) {
+      PositionPacket send_packet = Protocol::createPositionPacket(
+          DEVICE_TYPE_BOAT, device_ID, myLat, myLon, boatHeading, ts);
 
-    if (lora.transmit(send_packet)) {
-        Serial.println(name + " packet sent!");
+      if (lora.transmit(send_packet)) {
+          Serial.println(name + " packet sent!");
+          //packetSent variable true; so two packets aren't set at the same time. 
+      hasTransmittedThisCycle = true;
+      }
     }
   }
 
@@ -219,8 +225,14 @@ void loop () {
   }
 
   //shutdown procedure
-  unsigned long finish_ms = millis();
-  Serial.print("Loop time: ");
-  Serial.print(finish_ms - now_ms);
-  Serial.println(" ms");
+  // if (now_ms - lastGPSLog >= 1000) { 
+  //   unsigned long finish_ms = millis();
+  //   Serial.print("Loop time: ");
+  //   Serial.print(finish_ms - now_ms);
+  //   Serial.println(" ms");
+  // }
 }
+
+
+
+//flag for sending and receiving. we only need to read the packet one time, and then also send the packet one time. 
