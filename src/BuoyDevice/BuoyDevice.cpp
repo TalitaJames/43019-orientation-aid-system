@@ -13,7 +13,7 @@
 #define MaxBoat (DeviceConfig::MaxBoatNumber)
 #define MaxBuoy (DeviceConfig::MaxBuoyNumber)
 #define PPS_PIN 27
-#define SIREN_PIN 300
+#define SIREN_PIN 5
 
 // Library objects
 DeviceConfig config;
@@ -25,7 +25,6 @@ Navigation* nav = nullptr;
 TDMAScheduler* tdma = nullptr;
 
 // Constants
-
 const float siren_dist = 30.0f;
 
 // Global Variables
@@ -39,6 +38,7 @@ uint32_t lastGPSLog = 0;
 uint8_t target;
 uint8_t start;
 uint8_t now;
+bool activate_siren = false;
 
 volatile unsigned long lastPPSTime = 0;
 volatile bool ppsTriggered = false;
@@ -159,20 +159,19 @@ void loop () {
     if (gps.getPosition(myLat, myLon)) {
       if (packet.deviceType == DEVICE_TYPE_BOAT) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
-        registry.updateBoat(packet.deviceID, distanceToTarget);
+        if (distanceToTarget < siren_dist) {
+          activate_siren = true;
+        } else {activate_siren = false;}
       }
     }
   }
 
-
   //if in range, turn on siren
   //else turn off
-  for (int i = 0; i < MaxBoat; i++) {
-    float d = registry.getBoatDistance(i);
-    if (d > 0 && d <= siren_dist) {
-      // Activate siren
-      digitalWrite(SIREN_PIN, 1);
-    }
+  if (activate_siren) {
+    // Activate siren
+    digitalWrite(SIREN_PIN, 0);
   }
+  else {digitalWrite(SIREN_PIN, 1);}
 }
 
