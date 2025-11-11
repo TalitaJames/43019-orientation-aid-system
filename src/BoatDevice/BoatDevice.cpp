@@ -28,6 +28,7 @@ TTS tts;
 
 // Constants
 const float DANGER_DISTANCE_M = 20.0f;
+const uint32_t PACKET_DEBOUNCE_MS = 50; // Ignore duplicate packets within 50ms
 
 // Global variables
 String name; // Device name. used for print statements.  
@@ -94,17 +95,21 @@ void setup() {
 
   // Initialize navigation system using local (Central, Sydney) reference latitude for precise coordinate data. 
   nav = new Navigation(-33.8688);
+  Serial.println("Navigation system initialised");
 
   // Define interrupt pins for PPS. 
   pinMode(PPS_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPPS, RISING);
+  Serial.println("PPS interrupt configured");
 
   // Initialize TDMA Scheduler (up to 10 devices, 100ms per device).
   tdma = new TDMAScheduler(device_ID, MaxDevice, 100);
+  Serial.println("TDMA Scheduler Initialsied");
 
   // Initialise button 
   buttonSetup();
   tts.begin();
+  Serial.println("Button initialised");
 
   lastGPSLog = millis() - 1000;
 
@@ -185,7 +190,7 @@ void loop () {
   if (lora.receive(packet) && packet.deviceID != device_ID) { 
     Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
     if (gps.getPosition(myLat, myLon)) {
-      if (packet.deviceType == DEVICE_TYPE_BOAT && packet.deviceID != device_ID) {
+      if (packet.deviceType == DEVICE_TYPE_BOAT) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
         registry.updateBoat(packet.deviceID, distanceToTarget);
       } else if (packet.deviceType == DEVICE_TYPE_BUOY) {
