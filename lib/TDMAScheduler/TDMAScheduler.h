@@ -23,7 +23,7 @@
 class TDMAScheduler {
 public:
 
-  TDMAScheduler(uint8_t deviceID, uint8_t totalDevices, uint16_t slotMs); //constructor 
+  TDMAScheduler(uint8_t deviceID, uint8_t totalDevices, uint16_t slotWindow, uint16_t slotMs); //constructor 
   void onPPSInterrupt(unsigned long ppsMicros);
   void update();
   bool canTransmit() const;
@@ -32,11 +32,14 @@ public:
   unsigned long getSlotStart() const;
   unsigned long getSlotEnd() const;
   unsigned long getCycleStart() const;
+  unsigned long getTransmitWindowEnd() const;
+
 
 private:
   uint8_t _deviceID;
   uint8_t _totalDevices;
   unsigned long _slotDuration;
+  unsigned long _slotWindow;
   unsigned long _cycleStart;
   bool _newCycle;
   
