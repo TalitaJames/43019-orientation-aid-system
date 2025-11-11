@@ -103,7 +103,7 @@ void setup() {
   Serial.println("PPS interrupt configured");
 
   // Initialize TDMA Scheduler (up to 10 devices, 100ms per device).
-  tdma = new TDMAScheduler(device_ID, MaxDevice, 100);
+  tdma = new TDMAScheduler(device_ID, MaxDevice, 80, 100);
   Serial.println("TDMA Scheduler Initialsied");
 
   // Initialise button 
