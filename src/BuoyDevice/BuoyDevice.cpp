@@ -173,5 +173,6 @@ void loop () {
     digitalWrite(SIREN_PIN, 0);
   }
   else {digitalWrite(SIREN_PIN, 1);}
+  digitalWrite(SIREN_PIN, 0);
 }
 

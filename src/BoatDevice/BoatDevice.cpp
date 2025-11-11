@@ -195,6 +195,10 @@ void loop () {
       if (packet.deviceType == DEVICE_TYPE_BOAT) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
         registry.updateBoat(packet.deviceID, distanceToTarget);
+        // Warning  if other boat is too close
+        if (distanceToTarget < DANGER_DISTANCE_M) {
+          tts.sayWarning();
+        }
       } else if (packet.deviceType == DEVICE_TYPE_BUOY) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
         buoyHeading = nav->bearingTo(myLat, myLon, packet.latitude, packet.longitude);
@@ -203,30 +207,16 @@ void loop () {
     }
   }
 
-  //initiate beeper for boat
-  for (int i = 0; i < MaxBoat; i++) {
-    float d = registry.getBoatDistance(i);
-    if (d > 0 && d <= DANGER_DISTANCE_M) {
-      tts.sayWarning();
-    }
-  }
-
-  //decide target buoy as the one with smallest id
-  //switch target to the closest higher id after passing the target
-  float prevd = 100;
-  for (int i = 0; i < MaxBuoy; i++) {
-    float d = registry.findBuoy(i);
-    if (d < prevd) {
-      target = registry.getBuoyID(i);
-    }
+  //decide target buoy
+  if (packet.deviceType == DEVICE_TYPE_BUOY) {
+    target = packet.deviceID;
   }
   
   //if button pressed, output reading
   if(speakReading){
     // TODO this is where the tts should give more specific gps information
-    //distanceToTarget = registry.getBuoyDistance(target);
+    distanceToTarget = registry.getBuoyDistance(target);
     buoyHeading = registry.getBuoyHeading(target);
-    distanceToTarget = registry.getBoatDistance(1);
     expectHeading = abs(boatHeading - buoyHeading);
     tts.sayReport(expectHeading, distanceToTarget);
     speakReading = false;
