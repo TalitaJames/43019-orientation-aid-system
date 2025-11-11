@@ -188,23 +188,23 @@ void loop () {
 
   
   // Calculate euclidean distance when receiving packets
-  if (lora.receive(packet) && packet.deviceID != last_device_ID) {
-    last_device_ID = packet.deviceID;
+  if (lora.receive(packet) && packet.deviceID != device_ID) {
     Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
     if (gps.getPosition(myLat, myLon)) {
       if (packet.deviceType == DEVICE_TYPE_BOAT) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
         registry.updateBoat(packet.deviceID, distanceToTarget);
-        // Warning  if other boat is too close
-        if (distanceToTarget < DANGER_DISTANCE_M) {
-          tts.sayWarning();
-        }
       } else if (packet.deviceType == DEVICE_TYPE_BUOY) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
         buoyHeading = nav->bearingTo(myLat, myLon, packet.latitude, packet.longitude);
         registry.updateBuoy(packet.deviceID, distanceToTarget, buoyHeading);
       }
     }
+  }
+
+  // Warning  if other boat is too close
+  if (distanceToTarget < DANGER_DISTANCE_M) {
+    tts.sayWarning();
   }
 
   //decide target buoy

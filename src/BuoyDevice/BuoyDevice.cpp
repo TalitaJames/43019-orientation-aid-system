@@ -93,7 +93,7 @@ void setup() {
 
 
   // Initialize TDMA Scheduler (up to 10 devices, 100ms per device)
-  tdma = new TDMAScheduler(device_ID, MaxDevice, 100);
+  tdma = new TDMAScheduler(device_ID, MaxDevice, 80, 100);
   Serial.println("TDMA Scheduler Initialsied");
 
   lastGPSLog = millis() - 1000;
@@ -170,9 +170,8 @@ void loop () {
   //else turn off
   if (activate_siren) {
     // Activate siren
-    digitalWrite(SIREN_PIN, 0);
+    digitalWrite(SIREN_PIN, LOW);
   }
-  else {digitalWrite(SIREN_PIN, 1);}
-  digitalWrite(SIREN_PIN, 0);
+  else {digitalWrite(SIREN_PIN, HIGH);}
 }
 
