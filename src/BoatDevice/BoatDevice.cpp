@@ -32,7 +32,8 @@ const uint32_t PACKET_DEBOUNCE_MS = 50; // Ignore duplicate packets within 50ms
 
 // Global variables
 String name; // Device name. used for print statements.  
-uint8_t device_ID; // ID of the device. Configured by setDevice. 
+uint8_t device_ID; // ID of the device. Configured by setDevice.
+uint8_t last_device_ID;
 float distanceToTarget; //
 float myLat, myLon; // Devices own geographical coordinates. 
 uint16_t boatHeading; // Devices own current heading. 
@@ -187,7 +188,8 @@ void loop () {
 
   
   // Calculate euclidean distance when receiving packets
-  if (lora.receive(packet) && packet.deviceID != device_ID) { 
+  if (lora.receive(packet) && packet.deviceID != last_device_ID) {
+    last_device_ID = packet.deviceID;
     Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
     if (gps.getPosition(myLat, myLon)) {
       if (packet.deviceType == DEVICE_TYPE_BOAT) {

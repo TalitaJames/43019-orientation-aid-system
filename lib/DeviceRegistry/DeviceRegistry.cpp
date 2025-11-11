@@ -78,7 +78,7 @@ void DeviceRegistry::updateBuoy(uint8_t id, float distance, float heading) {
 
 int DeviceRegistry::findBuoy(uint8_t id) {
   for (int i = 0; i < MAX_BUOY; i++) {
-    if (buoys[i].id == id+MAX_BOAT) return i;
+    if (buoys[i].id == id) return i;
   }
   return -1;
 }
