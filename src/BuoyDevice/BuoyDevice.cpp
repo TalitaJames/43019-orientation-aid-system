@@ -1,3 +1,7 @@
+/**
+ * 
+ */
+
 // Include all libraries
 #include <Arduino.h>
 #include <DeviceConfig.h>
@@ -8,7 +12,7 @@
 #include <Protocol.h>
 #include <TDMAScheduler.h>
 
-// Definitions
+// Definitions for Config variable
 #define MaxDevice (DeviceConfig::MaxDeviceNumber)
 #define MaxBoat (DeviceConfig::MaxBoatNumber)
 #define MaxBuoy (DeviceConfig::MaxBuoyNumber)
@@ -91,6 +95,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PPS_PIN), onPPS, RISING);
   Serial.println("PPS interrupt configured");
 
+  // Set Siren pin
+  pinMode(SIREN_PIN, OUTPUT);
 
   // Initialize TDMA Scheduler (up to 10 devices, 100ms per device)
   tdma = new TDMAScheduler(device_ID, MaxDevice, 80, 100);
@@ -99,7 +105,6 @@ void setup() {
   lastGPSLog = millis() - 1000;
 
   Serial.println(" Setup complete!");
-
 }
 
 /**
@@ -170,8 +175,7 @@ void loop () {
   //else turn off
   if (activate_siren) {
     // Activate siren
-    digitalWrite(SIREN_PIN, LOW);
+    digitalWrite(SIREN_PIN, HIGH);
   }
-  else {digitalWrite(SIREN_PIN, HIGH);}
+  else {digitalWrite(SIREN_PIN, LOW);}
 }
-

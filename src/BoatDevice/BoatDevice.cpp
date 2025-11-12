@@ -34,7 +34,7 @@ const uint32_t PACKET_DEBOUNCE_MS = 50; // Ignore duplicate packets within 50ms
 String name; // Device name. used for print statements.  
 uint8_t device_ID; // ID of the device. Configured by setDevice.
 uint8_t last_device_ID;
-float distanceToTarget; //
+float distanceToTarget = -1.0; //
 float myLat, myLon; // Devices own geographical coordinates. 
 uint16_t boatHeading; // Devices own current heading. 
 uint16_t buoyHeading; // Bearing from boat to buoy. 
@@ -203,7 +203,7 @@ void loop () {
   }
 
   // Warning  if other boat is too close
-  if (distanceToTarget < DANGER_DISTANCE_M) {
+  if (distanceToTarget < DANGER_DISTANCE_M && distanceToTarget > 0) {
     tts.sayWarning();
   }
 
