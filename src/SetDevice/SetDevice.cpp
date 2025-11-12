@@ -1,3 +1,15 @@
+/**
+ * SetDevice should be run when setting up a completely new device
+ * After uploading the setdevice environment, open Serial Monitor
+ * If needed, press reset on the Esp32
+ * The program will ask for device type and ID
+ * Type the number corresponding to your choice
+ * On completion, Boat/Buoy environment can be uploaded
+ * The Type and ID will be remembered
+ * 
+ * Note: number of devices can be set in DeviceConfig.h and it will be updated here accordingly6366
+ */
+
 // ConfigTool/SetDeviceID.ino
 #include <DeviceConfig.h>
 #include <Arduino.h>

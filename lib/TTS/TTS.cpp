@@ -23,6 +23,12 @@ void TTS::sayWarning() {
   voice.say(spPAUSE1);
 }
 
+void TTS::sayInvalid() {
+  voice.say(sp4_NO);
+  voice.say(sp4_TARGET);
+  voice.say(spPAUSE1);
+}
+
 uint8_t TTS::bearingToHour(uint16_t deg) {
   deg %= 360;
   int h = (deg + 15) / 30;      // round to nearest 30°

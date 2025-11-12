@@ -139,7 +139,7 @@ void loop () {
     // Create packet and send
     if (!hasTransmittedThisCycle) {
       PositionPacket send_packet = Protocol::createPositionPacket(
-          DEVICE_TYPE_BOAT, device_ID, myLat, myLon, heading, ts);
+          DEVICE_TYPE_BUOY, device_ID, myLat, myLon, heading, ts);
 
       if (lora.transmit(send_packet)) {
           Serial.println(name + " packet sent!");
@@ -148,15 +148,6 @@ void loop () {
       }
     }
   }
-  
-  // // Debug function
-  // if (lora.receive(packet)) {
-  //   Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
-  //   if (now - start > 2000000) {
-  //     Serial.println("Found packet!");
-  //     start = micros();
-  //   }
-  // }
   
   // Calculate euclidean distance when receiving packets
   if (lora.receive(packet) && packet.deviceID != device_ID) {
@@ -175,7 +166,7 @@ void loop () {
   //else turn off
   if (activate_siren) {
     // Activate siren
-    digitalWrite(SIREN_PIN, HIGH);
+    digitalWrite(SIREN_PIN, LOW);
   }
-  else {digitalWrite(SIREN_PIN, LOW);}
+  else {digitalWrite(SIREN_PIN, HIGH);}
 }

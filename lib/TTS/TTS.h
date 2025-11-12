@@ -10,6 +10,7 @@ public:
   bool begin();                                     // call once in setup()
   void sayReport(uint16_t bearingDeg, uint16_t m);  // blocking
   void sayWarning();
+  void sayInvalid();
 
 private:
   Talkie voice;
