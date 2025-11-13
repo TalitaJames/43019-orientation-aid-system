@@ -150,13 +150,14 @@ void loop () {
   
   // Calculate euclidean distance when receiving packets
   if (lora.receive(packet) && packet.deviceID != device_ID) {
-    //Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
+    Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
     if (gps.getPosition(myLat, myLon)) {
       if (packet.deviceType == DEVICE_TYPE_BOAT) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
         if (distanceToTarget < siren_dist) {
           activate_siren = true;
         } else {activate_siren = false;}
+        Serial.println(distanceToTarget);
       }
     }
   }
@@ -168,4 +169,24 @@ void loop () {
     digitalWrite(SIREN_PIN, LOW);
   }
   else {digitalWrite(SIREN_PIN, HIGH);}
+
+  // Debug function
+  // if (lora.receive(packet)) {
+  //   Serial.println("---- Position Packet ----");
+  //   Serial.print("Device Type: "); Serial.println(packet.deviceType);
+  //   Serial.print("Device ID: "); Serial.println(packet.deviceID);
+  //   Serial.print("Latitude: "); Serial.println(packet.latitude, 6);
+  //   Serial.print("Longitude: "); Serial.println(packet.longitude, 6);
+  //   Serial.print("Heading: "); Serial.println(packet.heading);
+  //   Serial.print("Timestamp: "); Serial.println(packet.timestamp);
+  //   Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
+  //   Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
+  //   Serial.println("--------------------------");
+  // }
+
+  // Timer for testing
+  //unsigned long finish_ms = millis();
+  //Serial.print("Loop time: ");
+  //Serial.print(finish_ms - now_ms);
+  //Serial.println(" ms");
 }

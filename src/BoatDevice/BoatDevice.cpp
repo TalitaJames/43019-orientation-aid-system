@@ -166,23 +166,9 @@ void loop () {
     }
   }
 
-  // // Debug function
-  // if (lora.receive(packet)) {
-  //   Serial.println("---- Position Packet ----");
-  //   Serial.print("Device Type: "); Serial.println(packet.deviceType);
-  //   Serial.print("Device ID: "); Serial.println(packet.deviceID);
-  //   Serial.print("Latitude: "); Serial.println(packet.latitude, 6);
-  //   Serial.print("Longitude: "); Serial.println(packet.longitude, 6);
-  //   Serial.print("Heading: "); Serial.println(packet.heading);
-  //   Serial.print("Timestamp: "); Serial.println(packet.timestamp);
-  //   Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
-  //   Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
-  //   Serial.println("--------------------------");
-  // }
-  
   // Calculate euclidean distance when receiving packets
   if (lora.receive(packet) && packet.deviceID != device_ID) {
-    //Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
+    Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
     if (gps.getPosition(myLat, myLon)) {
       if (packet.deviceType == DEVICE_TYPE_BOAT) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
@@ -191,13 +177,20 @@ void loop () {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
         buoyHeading = nav->bearingTo(myLat, myLon, packet.latitude, packet.longitude);
         registry.updateBuoy(packet.deviceID, distanceToTarget, buoyHeading);
+        Serial.println(distanceToTarget);
       }
     }
   }
 
   // Warning if other boat is too close
   if (distanceToTarget < DANGER_DISTANCE_M && distanceToTarget > 0) {
-    //if (packet.deviceType == DEVICE_TYPE_BOAT)
+    // ============= TEST SECTION ===============
+    // Uncomment the 3 lines below for system in use
+    // For testing purpose, the filter for boat device was remove
+    // since we don't have 3 systems
+    //if (packet.deviceType == DEVICE_TYPE_BOAT){
+    //tts.sayWarning();
+    //}
     tts.sayWarning();
   }
 
@@ -213,18 +206,29 @@ void loop () {
     expectHeading = abs(boatHeading - buoyHeading);
     tts.sayReport(expectHeading, distanceToTarget);
     speakReading = false;
+    target = -1;
   } else if(speakReading && target <= 0){
     tts.sayInvalid(); 
     speakReading = false;
   }
 
+  //Debug function
+  // if (lora.receive(packet)) {
+  //   Serial.println("---- Position Packet ----");
+  //   Serial.print("Device Type: "); Serial.println(packet.deviceType);
+  //   Serial.print("Device ID: "); Serial.println(packet.deviceID);
+  //   Serial.print("Latitude: "); Serial.println(packet.latitude, 6);
+  //   Serial.print("Longitude: "); Serial.println(packet.longitude, 6);
+  //   Serial.print("Heading: "); Serial.println(packet.heading);
+  //   Serial.print("Timestamp: "); Serial.println(packet.timestamp);
+  //   Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
+  //   Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
+  //   Serial.println("--------------------------");
+  // }
+
   // Timer for testing
-  unsigned long finish_ms = millis();
+  //unsigned long finish_ms = millis();
   //Serial.print("Loop time: ");
   //Serial.print(finish_ms - now_ms);
   //Serial.println(" ms");
-}
-
-
-
-//flag for sending and receiving. we only need to read the packet one time, and then also send the packet one time. 
+} 
