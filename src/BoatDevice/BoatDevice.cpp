@@ -1,3 +1,8 @@
+/**
+ * This is "main" for any Boat device
+ * This can be upladed after SetDevice procedure is complete
+ */
+
 // Include libraries
 #include <Arduino.h>
 #include <DeviceConfig.h>
@@ -10,11 +15,16 @@
 #include <Button.h>
 #include <TTS.h>
 
+// test
+#include <TinyGPS++.h>
+TinyGPSPlus gpsplus;
+
 // Definitions
 #define MaxDevice (DeviceConfig::MaxDeviceNumber) // 10 devices maximum
 #define MaxBoat (DeviceConfig::MaxBoatNumber) // 8 boats
 #define MaxBuoy (DeviceConfig::MaxBuoyNumber) // 2 buoys. this might not even need to be included in the boat executable.
-#define PPS_PIN 27 // PPS pin. used for interrupts. 
+#define PPS_PIN (DeviceConfig::PPS_PIN) // PPS pin. used for interrupts.
+#define DANGER_DISTANCE_M (DeviceConfig::DANGER_DISTANCE_M) // Distance to activate speaker warning
 
 // Library objects
 DeviceConfig config;
@@ -27,18 +37,17 @@ TDMAScheduler* tdma = nullptr;
 TTS tts;
 
 // Constants
-const float DANGER_DISTANCE_M = 20.0f;
 const uint32_t PACKET_DEBOUNCE_MS = 50; // Ignore duplicate packets within 50ms
 
 // Global variables
 String name; // Device name. used for print statements.  
 uint8_t device_ID; // ID of the device. Configured by setDevice.
 uint8_t last_device_ID;
-float distanceToTarget = -1.0; //
+float distanceToTarget = -1.0; // Distance to packet sender
 float myLat, myLon; // Devices own geographical coordinates. 
 uint16_t boatHeading; // Devices own current heading. 
-uint16_t buoyHeading; // Bearing from boat to buoy. 
-uint16_t expectHeading; // 
+uint16_t buoyHeading; // Bearing to buoy globally (North = 0)
+uint16_t expectHeading; // Bearing to buoy locally (boat heading = 0)
 uint32_t ts;
 uint32_t lastGPSLog = 0;
 uint8_t target;
@@ -60,7 +69,6 @@ void IRAM_ATTR onPPS() {
     hasTransmittedThisCycle = false;
   }
 }
-
 
 /**
  * Setup procedure. 
@@ -132,14 +140,19 @@ void loop () {
     if (gps.getPosition(myLat, myLon)) { // Every second, log your own GPS
       ts = gps.getGPSTimeMillis();
       registry.addGPSHistory(myLat, myLon, millis());
-      boatHeading = nav->computeHeadingTrend(registry.getGPSHistoryArray(), registry.getHistoryCount()); // Calculate boat heading based on GPS history
+      // Calculate boat heading based on GPS history
+      boatHeading = nav->computeHeadingTrend(registry.getGPSHistoryArray(), registry.getHistoryCount());
+      //Serial.println("gps:");
+      //Serial.println(myLat, 8);
+      //Serial.println(myLon, 8);
+      //Serial.println("heading" + boatHeading);
       lastGPSLog = now_ms;
     }
   }
-
+  
   // --- TDMA: Transmit or Receive ---
   if (tdma && tdma->canTransmit()) {
-    Serial.println("Attempting send protocol...");
+    //Serial.println("Attempting send protocol...");
     // Create packet and send
     if (!hasTransmittedThisCycle) {
       PositionPacket send_packet = Protocol::createPositionPacket(
@@ -153,26 +166,8 @@ void loop () {
     }
   }
 
-  // else {
-  //   // Radio is already in receive mode from transmit() or previous loop
-  //   // Just check for incoming packets (handled later in your code)
-
-  //   // lora.startReceive();
-  //   // if (now - start > 1000000) {
-  //   //   Serial.println("Listening...");
-  //   //   start = micros();
-  //   // }
-
-  // }
-  
   // // Debug function
   // if (lora.receive(packet)) {
-  //   Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
-  //   if (now - start > 2000000) {
-  //     Serial.println("Found packet!"); //these debug statements should be inside the class files. 
-  //     start = micros();
-  //   }
-  //   /*
   //   Serial.println("---- Position Packet ----");
   //   Serial.print("Device Type: "); Serial.println(packet.deviceType);
   //   Serial.print("Device ID: "); Serial.println(packet.deviceID);
@@ -183,13 +178,11 @@ void loop () {
   //   Serial.print("RSSI: "); Serial.print(lora.getLastRSSI()); Serial.println(" dBm");
   //   Serial.print("SNR: "); Serial.print(lora.getLastSNR()); Serial.println(" dB");
   //   Serial.println("--------------------------");
-  //   */
   // }
-
   
   // Calculate euclidean distance when receiving packets
   if (lora.receive(packet) && packet.deviceID != device_ID) {
-    Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
+    //Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
     if (gps.getPosition(myLat, myLon)) {
       if (packet.deviceType == DEVICE_TYPE_BOAT) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
@@ -202,27 +195,30 @@ void loop () {
     }
   }
 
-  // Warning  if other boat is too close
+  // Warning if other boat is too close
   if (distanceToTarget < DANGER_DISTANCE_M && distanceToTarget > 0) {
+    //if (packet.deviceType == DEVICE_TYPE_BOAT)
     tts.sayWarning();
   }
 
-  //decide target buoy
+  // Decide target buoy
   if (packet.deviceType == DEVICE_TYPE_BUOY) {
     target = packet.deviceID;
   }
-  
-  //if button pressed, output reading
-  if(speakReading){
-    // TODO this is where the tts should give more specific gps information
+ 
+  // If button was pressed, read out distance and heading
+  if(speakReading && target > 0){
     distanceToTarget = registry.getBuoyDistance(target);
     buoyHeading = registry.getBuoyHeading(target);
     expectHeading = abs(boatHeading - buoyHeading);
     tts.sayReport(expectHeading, distanceToTarget);
     speakReading = false;
+  } else if(speakReading && target <= 0){
+    tts.sayInvalid(); 
+    speakReading = false;
   }
 
-  //shutdown procedure
+  // Timer for testing
   unsigned long finish_ms = millis();
   //Serial.print("Loop time: ");
   //Serial.print(finish_ms - now_ms);

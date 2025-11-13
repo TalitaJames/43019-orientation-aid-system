@@ -1,5 +1,6 @@
 /**
- * 
+ * This is "main" for any Buoy device
+ * This can be upladed after SetDevice procedure is complete
  */
 
 // Include all libraries
@@ -13,11 +14,12 @@
 #include <TDMAScheduler.h>
 
 // Definitions for Config variable
-#define MaxDevice (DeviceConfig::MaxDeviceNumber)
-#define MaxBoat (DeviceConfig::MaxBoatNumber)
-#define MaxBuoy (DeviceConfig::MaxBuoyNumber)
-#define PPS_PIN 27
-#define SIREN_PIN 5
+#define MaxDevice (DeviceConfig::MaxDeviceNumber) // 10 devices maximum
+#define MaxBoat (DeviceConfig::MaxBoatNumber) // 8 boats
+#define MaxBuoy (DeviceConfig::MaxBuoyNumber) // 2 buoys. this might not even need to be included in the boat executable.
+#define PPS_PIN (DeviceConfig::PPS_PIN) // PPS pin. used for interrupts.
+#define SIREN_PIN (DeviceConfig::SIREN_PIN) // GPIO pin to activate relay triggering siren
+#define siren_dist (DeviceConfig::siren_dist) // Range around buoy that activates siren
 
 // Library objects
 DeviceConfig config;
@@ -27,9 +29,6 @@ LoRaManager lora;
 PositionPacket packet;
 Navigation* nav = nullptr;
 TDMAScheduler* tdma = nullptr;
-
-// Constants
-const float siren_dist = 30.0f;
 
 // Global Variables
 String name;
@@ -135,7 +134,7 @@ void loop () {
 
   // --- TDMA: Transmit or Receive ---
   if (tdma && tdma->canTransmit()) {
-    Serial.println("Attempting send protocol...");
+    //Serial.println("Attempting send protocol...");
     // Create packet and send
     if (!hasTransmittedThisCycle) {
       PositionPacket send_packet = Protocol::createPositionPacket(
@@ -151,7 +150,7 @@ void loop () {
   
   // Calculate euclidean distance when receiving packets
   if (lora.receive(packet) && packet.deviceID != device_ID) {
-    Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
+    //Serial.printf("Received packet from %d at %lu us\n", packet.deviceID, micros() - lastPPSTime);
     if (gps.getPosition(myLat, myLon)) {
       if (packet.deviceType == DEVICE_TYPE_BOAT) {
         distanceToTarget = nav->distanceBetween(myLat, myLon, packet.latitude, packet.longitude);
