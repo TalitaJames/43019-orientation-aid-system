@@ -22,16 +22,49 @@
  */
 class TDMAScheduler {
 public:
+  /**
+   * @brief Constructor, create TDMA object
+   * @param deviceID ID of the current device so it can be sorted
+   * @param totalDevices Max devices in the system to split timing equally
+   * @param slotWindow Window to transmit data
+   * @param slotMs Total time for each slot. E.g. 10 devices = 100ms slotMs
+   */
+  TDMAScheduler(uint8_t deviceID, uint8_t totalDevices, uint16_t slotWindow, uint16_t slotMs);
 
-  TDMAScheduler(uint8_t deviceID, uint8_t totalDevices, uint16_t slotWindow, uint16_t slotMs); //constructor 
+  /**
+   * @brief Interrupt from PPS to signal start of slot
+   */
   void onPPSInterrupt(unsigned long ppsMicros);
+
+  /**
+   * @brief Reset and start a new cycle
+   */
   void update();
+
+  /**
+   * @brief Check if it is device's turn to transmit
+   * @return true if it is time to transmit
+   */
   bool canTransmit() const;
 
-  //debugging
+  /**
+   * @brief Get slot start time in microsecond
+   */
   unsigned long getSlotStart() const;
+
+    /**
+   * @brief Get slot end time in microsecond
+   */
   unsigned long getSlotEnd() const;
+
+  /**
+   * @brief Get cycle start time in microsecond
+   */
   unsigned long getCycleStart() const;
+
+  /**
+   * @brief Get transmit window end time in microsecond
+   */
   unsigned long getTransmitWindowEnd() const;
 
 

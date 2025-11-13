@@ -41,13 +41,31 @@ struct PositionPacket {
 
 class Protocol {
 public:
-  // Calculate CRC8 checksum
+  /**
+   * @brief Calculate an 8-bit CRC checksum for given data.
+   * @param data Pointer to data buffer.
+   * @param length Number of bytes to process.
+   * @return Computed CRC8 checksum.
+   */
   static uint8_t calculateChecksum(const uint8_t* data, size_t length);
   
-  // Validate packet integrity
+  /**
+   * @brief Validate the integrity of a received position packet.
+   * @param packet Pointer to the received packet.
+   * @return True if checksum and structure are valid.
+   */
   static bool validatePacket(const PositionPacket* packet);
   
-  // Create position packet
+  /**
+   * @brief Construct a new position packet with provided data.
+   * @param deviceType Type of the sending device.
+   * @param deviceID Device identifier.
+   * @param lat Latitude in decimal degrees.
+   * @param lon Longitude in decimal degrees.
+   * @param heading Heading in degrees (0–359).
+   * @param timestamp GPS time in milliseconds since midnight.
+   * @return Fully assembled PositionPacket.
+   */
   static PositionPacket createPositionPacket(
     DeviceType deviceType,
     uint8_t deviceID,
@@ -57,7 +75,10 @@ public:
     uint32_t timestamp
   );
   
-  // Get packet size
+  /**
+   * @brief Get the size of a position packet in bytes.
+   * @return Packet size (25 bytes).
+   */
   static constexpr size_t getPacketSize() { return sizeof(PositionPacket); }
 };
 

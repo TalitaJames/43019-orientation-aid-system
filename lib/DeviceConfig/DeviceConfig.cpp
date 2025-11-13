@@ -35,6 +35,7 @@ bool DeviceConfig::begin() {
 }
 
 bool DeviceConfig::setConfig(DeviceType type, uint8_t id) {
+  // If unkown device, stop process
   if (!isValidID(type, id)) {
     Serial.println("Invalid device type or ID!");
     return false;
@@ -75,6 +76,7 @@ String DeviceConfig::getDeviceName() const {
   return name;
 }
 
+// If device type and ID match the set limit, return true
 bool DeviceConfig::isValidID(DeviceType type, uint8_t id) {
   if (type == DEVICE_TYPE_BOAT) {
     return (id >= 1 && id <= MaxBoatNumber);

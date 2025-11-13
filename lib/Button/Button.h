@@ -9,14 +9,28 @@
 #define BUTTON_H
 
 #include <Arduino.h>
+#include <DeviceConfig.h>
 
-#define BUTTON_PIN 12
-// #define LED_PIN 22
+#define BUTTON_PIN (DeviceConfig::BUTTON_PIN)
 
 extern bool speakReading; // boolean flag to indicate speaker should talk
 
-void IRAM_ATTR buttonInterrupt();
+/**
+ * @brief Sets up interupts and functionality for the button
+ *
+ */
 void buttonSetup();
+
+/**
+ * @brief When the button is pressed, this code will interupt the loop
+ *
+ */
+void IRAM_ATTR buttonInterrupt();
+
+/**
+ * @brief Displays data about the button and status
+ *
+ */
 void debugButton();
 
 

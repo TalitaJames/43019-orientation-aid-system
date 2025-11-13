@@ -83,11 +83,6 @@ int DeviceRegistry::findBuoy(uint8_t id) {
   return -1;
 }
 
-float DeviceRegistry::getBuoyID(uint8_t id) {
-  int idx = findBuoy(id);
-  return (idx >= 0) ? buoys[idx].id : -1.0f;
-}
-
 float DeviceRegistry::getBuoyDistance(uint8_t id) {
   int idx = findBuoy(id);
   return (idx >= 0) ? buoys[idx].distance : -1.0f;

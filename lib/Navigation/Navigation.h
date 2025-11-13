@@ -54,19 +54,9 @@ public:
     float bearingTo(float lat1, float lon1, float lat2, float lon2);
 
     /**
-     * @brief Calculate relative bearing from boat's perspective
-     */
-    float relativeBearing(float targetBearing, float boatHeading);
-
-    /**
      * @brief Normalise angle to 0-360 range
      */
     static float normaliseAngle(float angle);
-
-    /**
-     * @brief give more reasonable answers for heading subtractions. 
-     */
-    float angleDifference(float angle1, float angle2);
 
     /**
      * @brief find boat heading compare to global heading through past gps data 

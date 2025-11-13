@@ -43,14 +43,6 @@ float Navigation::bearingTo(float lat1, float lon1, float lat2, float lon2) {
     return normaliseAngle(bearing);
 }
 
-float Navigation::relativeBearing(float targetBearing, float boatHeading) {
-  // Calculate difference between target bearing and boat heading
-  float relative = angleDifference(boatHeading, targetBearing);
-  
-  return relative;
-}
-
-
 float Navigation::normaliseAngle(float angle) {
   // Normalize angle to 0-360 range
   while (angle < 0) {
@@ -62,29 +54,13 @@ float Navigation::normaliseAngle(float angle) {
   return angle;
 }
 
-float Navigation::angleDifference(float angle1, float angle2) {
-  // Calculate shortest difference between two angles
-  // Result is -180 to +180
-  
-  float diff = angle2 - angle1;
-  
-  // Normalize to -180 to +180
-  while (diff > 180) {
-    diff -= 360;
-  }
-  while (diff < -180) {
-    diff += 360;
-  }
-  
-  return diff;
-}
-
 float Navigation::computeHeadingTrend(const GPSHistory* points, uint8_t count) {
   if (count < 2) return lastHeading;  // not enough data
 
   float totalBearing = 0.0f;
   uint8_t validCount = 0;
 
+  // Pull gps data from history array
   for (uint8_t i = 0; i < count - 1; i++) {
     float lat1 = points[i].latitude;
     float lon1 = points[i].longitude;
@@ -96,6 +72,7 @@ float Navigation::computeHeadingTrend(const GPSHistory* points, uint8_t count) {
     // Ignore small movements (e.g., GPS noise)
     if (dist < 1.5f) continue;
 
+    // Find bearing to between 2 points
     float bearing = bearingTo(lat1, lon1, lat2, lon2);
     totalBearing += bearing;
     validCount++;
@@ -106,6 +83,7 @@ float Navigation::computeHeadingTrend(const GPSHistory* points, uint8_t count) {
     return lastHeading;
   }
 
+  // Averageing bearing to get a consistent reading
   float avgBearing = totalBearing / validCount;
 
   // Normalize heading to 0-360

@@ -14,11 +14,13 @@
 #include <DeviceConfig.h>
 #include <Arduino.h>
 
+// Get variable from Device Config
 DeviceConfig config;
 const int MaxBoat = config.MaxBoatNumber;
 const int MaxBuoy = config.MaxBuoyNumber;
 const int MaxDevice = MaxBoat+MaxBuoy;
 
+// Procedure if device type boat was chosen
 void configureBoat() {
   Serial.println("\n--- BOAT CONFIGURATION ---");
   Serial.println("Enter boat number (1-");
@@ -40,6 +42,7 @@ void configureBoat() {
   }
 }
 
+// Procedure if device type buoy was chosen
 void configureBuoy() {
   Serial.println("\n--- BUOY CONFIGURATION ---");
   Serial.println("Enter buoy number:");
@@ -64,6 +67,7 @@ void configureBuoy() {
   }
 }
 
+// Start configuration by choosing device type
 void setup() {
   Serial.begin(115200);
   delay(2000);
@@ -91,6 +95,7 @@ void setup() {
   Serial.println("=================================\n");
 }
 
+// Process input
 void loop() {
   if (Serial.available()) {
     char choice = Serial.read();

@@ -71,16 +71,22 @@ public:
    */
   int16_t getLastRSSI();
   
-  // Get SNR of last received packet
+  /**
+   * @brief Get SNR of last received packet
+   */
   float getLastSNR();
   
-  // Get statistics
+  /**
+   * @brief Get statistics, check if packet received successfully
+   */
   uint32_t getPacketsSent() const { return packetsSent; }
   uint32_t getPacketsReceived() const { return packetsReceived; }
   uint32_t getPacketsFailed() const { return packetsFailed; }
   uint32_t getChecksumErrors() const { return checksumErrors; }
   
-  // Reset to receive mode
+  /**
+   * @brief Reset to receive mode
+   */
   void startReceive();
 };
 
